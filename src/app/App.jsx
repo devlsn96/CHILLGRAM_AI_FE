@@ -18,6 +18,7 @@ import QnaDetailPage from "@/pages/qna/QnaDetailPage";
 
 import DashboardPage from "@/pages/DashboardPage";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
+import ProductPackagePage from "@/pages/ProductPackagePage";
 import ADPage from "@/pages/ad/ADPage";
 import ADResultPage from "@/pages/ad/ADResultPage";
 import SnsManagementPage from "@/pages/SnsManagement.jsx";
@@ -73,6 +74,10 @@ export default function App() {
             <Route
               path="/dashboard/products/:productId/projectAdDetail/:projectId"
               element={<ProjectAdDetail />}
+            />
+            <Route
+              path="/dashboard/products/:productId/addPackage"
+              element={<ProductPackagePage />}
             />
             <Route
               path="/dashboard/products/:productId/addAD"

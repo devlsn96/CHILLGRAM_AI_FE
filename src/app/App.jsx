@@ -19,6 +19,7 @@ import QnaDetailPage from "@/pages/qna/QnaDetailPage";
 import ProductsPage from "@/pages/ProductsPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import DashboardPage from "@/pages/DashboardPage";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import ADPage from "@/pages/ad/ADPage";
 import ADResultPage from "@/pages/ad/ADResultPage";
 import SnsManagementPage from "@/pages/SnsManagement.jsx";
@@ -63,6 +64,7 @@ export default function App() {
           <Route element={<PrivateRoute />}>
             <Route path="/qna/new" element={<QnaWritePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="/dashboard/sns" element={<SnsManagementPage />} />
             <Route
               path="/dashboard/products"

@@ -16,8 +16,6 @@ import QnAPage from "@/pages/qna/QnAPage";
 import QnaWritePage from "@/pages/qna/QnaWritePage";
 import QnaDetailPage from "@/pages/qna/QnaDetailPage";
 
-import ProductsPage from "@/pages/ProductsPage";
-import ProductDetailPage from "@/pages/ProductDetailPage";
 import DashboardPage from "@/pages/DashboardPage";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import ADPage from "@/pages/ad/ADPage";
@@ -57,14 +55,12 @@ export default function App() {
           <Route path="/privacy/consent" element={<PrivacyConsentPage />} />
           <Route path="/qna" element={<QnAPage />} />
           <Route path="/qna/:questionId" element={<QnaDetailPage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/products/:productId" element={<ProductDetailPage />} />
 
           {/* 로그인 라우트 */}
           <Route element={<PrivateRoute />}>
             <Route path="/qna/new" element={<QnaWritePage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/dashboard/sns" element={<SnsManagementPage />} />
             <Route
               path="/dashboard/products"

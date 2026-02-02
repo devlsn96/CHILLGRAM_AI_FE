@@ -1,7 +1,6 @@
 ﻿import Container from "@/components/common/Container";
-import leftArrow from "@/assets/image/left-arrow.png";
-import rightArrow from "@/assets/image/right-arrow.png";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function ADStepLayout({
   step,
@@ -20,11 +19,7 @@ export default function ADStepLayout({
           onClick={() => navigate("/dashboard/products")}
           className="flex items-center gap-1.5 px-4 py-2 bg-white rounded-lg border border-gray-200 text-gray-500 text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm"
         >
-          <img
-            src={leftArrow}
-            alt="left_arrow"
-            className={"max-h-3 opacity-40"}
-          />
+          <ArrowLeft size={20} />
           제품관리
         </button>
       </div>
@@ -41,11 +36,7 @@ export default function ADStepLayout({
           disabled={step === 1}
           className="flex items-center gap-1.5 px-4 py-2 bg-white rounded-lg border border-gray-200 text-gray-500 text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
         >
-          <img
-            src={leftArrow}
-            alt="left_arrow"
-            className={"max-h-3 opacity-60"}
-          />
+          <ArrowLeft size={20} />
           이전
         </button>
 
@@ -53,18 +44,14 @@ export default function ADStepLayout({
           type="button"
           onClick={onNext}
           disabled={disableNext}
-          className={`flex items-center gap-1.5 rounded-2xl rounded-lg text-sm px-4 py-2 font-bold shadow-sm ${
+          className={`flex items-center gap-1.5 rounded-lg text-sm px-4 py-2 font-bold shadow-sm ${
             disableNext
               ? "bg-gray-300 text-gray-500"
               : "bg-[#60A5FA] text-white hover:brightness-95"
           }`}
         >
           {nextLabel ?? "다음"}
-          <img
-            src={rightArrow}
-            alt="left_arrow"
-            className={"max-h-3 opacity-60"}
-          />
+          <ArrowRight size={20} />
         </button>
       </div>
     </Container>

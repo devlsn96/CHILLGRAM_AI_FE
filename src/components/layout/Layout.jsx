@@ -1,7 +1,6 @@
 import { Header } from "./Header";
 import Footer from "./Footer";
 import { useLocation } from "react-router-dom";
-import { ADHeader } from "./ADHeader";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 export function Layout({ children, isLoggedIn, setIsLoggedIn }) {

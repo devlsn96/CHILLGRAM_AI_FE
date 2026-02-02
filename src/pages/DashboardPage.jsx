@@ -2,8 +2,6 @@ import {
   LayoutGrid,
   Image as ImageIcon,
   TrendingUp,
-  BarChart3,
-  PlusCircle,
   Package,
   Share2,
   FileText,

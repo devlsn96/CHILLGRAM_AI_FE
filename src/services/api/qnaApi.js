@@ -1,12 +1,10 @@
 import { apiFetch } from "@/lib/apiFetch";
 
-const BASE_URL = "/api/qs/questions";
-
 /**
  * 질문 목록 조회
  */
 export async function fetchQuestions() {
-    const res = await apiFetch(BASE_URL);
+    const res = await apiFetch("/api/qs/questions");
     if (!res.ok) throw new Error("질문 목록을 불러오지 못했습니다.");
     const json = await res.json();
     // API 응답이 배열이면 그대로, 객체면 data 또는 questions 속성 추출
@@ -18,7 +16,7 @@ export async function fetchQuestions() {
  * 질문 상세 조회
  */
 export async function fetchQuestion(id) {
-    const res = await apiFetch(`${BASE_URL}/${id}`);
+    const res = await apiFetch(`/api/qs/questions/${id}`);
     if (!res.ok) throw new Error("질문을 불러오지 못했습니다.");
     const json = await res.json();
     // API 응답이 객체로 감싸져 있으면 추출
@@ -41,7 +39,7 @@ export async function createQuestion(payload) {
         formData.append("file", payload.file);
     }
 
-    const res = await apiFetch(BASE_URL, {
+    const res = await apiFetch("/api/qs/questions", {
         method: "POST",
         body: formData,
     });
@@ -53,7 +51,7 @@ export async function createQuestion(payload) {
  * 답변 등록
  */
 export async function createAnswer(questionId, payload) {
-    const res = await apiFetch(`${BASE_URL}/${questionId}/answers`, {
+    const res = await apiFetch(`/api/qs/questions/${questionId}/answers`, {
         method: "POST",
         body: JSON.stringify(payload),
     });

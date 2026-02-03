@@ -305,7 +305,7 @@ export default function QnAPage() {
               </ErrorBoundary>
             </div>
 
-            {filteredQuestions.length === 0 && (
+            {!isLoading && !isError && filteredQuestions.length === 0 && (
               <div className="mt-8 rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-10 text-center text-sm text-gray-400">
                 {FILTER_LABEL_MAP[activeFilter]} 상태의 질문이 없습니다.
               </div>

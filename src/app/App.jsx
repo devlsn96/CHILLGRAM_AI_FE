@@ -26,6 +26,7 @@ import ProductManagementPage from "@/pages/ProductManagement";
 import ProductAdStatusPage from "@/pages/ProductAdStatus";
 import AnalyticsReportPage from "@/pages/AnalyticsReportPage";
 import ProjectAdDetail from "@/pages/ProjectAdDetail";
+import ProjectDesignDetail from "@/pages/ProjectDesignDetail";
 
 export default function App() {
   const login = useAuthStore((s) => s.login);
@@ -74,6 +75,10 @@ export default function App() {
             <Route
               path="/dashboard/products/:productId/projectAdDetail/:projectId"
               element={<ProjectAdDetail />}
+            />
+            <Route
+              path="/dashboard/products/:productId/projectDesignDetail/:projectId"
+              element={<ProjectDesignDetail />}
             />
             <Route
               path="/dashboard/products/:productId/addPackage"

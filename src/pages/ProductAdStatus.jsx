@@ -95,7 +95,10 @@ export default function ProductAdStatusPage() {
               />{" "}
               광고 생성
             </button>
-            <button className="bg-white hover:bg-gray-50 text-[#111827] border border-gray-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 text-sm">
+            <button
+              onClick={() => navigate("./addPackage")}
+              className="bg-white hover:bg-gray-50 text-[#111827] border border-gray-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 text-sm"
+            >
               <FileText size={18} /> 도안 생성
             </button>
           </div>
@@ -107,10 +110,11 @@ export default function ProductAdStatusPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === tab
+              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                activeTab === tab
                   ? "bg-[#60A5FA] border-[#60A5FA] text-white shadow-md"
                   : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                }`}
+              }`}
             >
               {tab}
             </button>
@@ -127,10 +131,11 @@ export default function ProductAdStatusPage() {
               >
                 <div className="mb-8">
                   <span
-                    className={`inline-block px-3 py-1.5 rounded-lg text-xs font-black mb-4 ${project.type === "ad"
+                    className={`inline-block px-3 py-1.5 rounded-lg text-xs font-black mb-4 ${
+                      project.type === "ad"
                         ? "bg-purple-50 text-purple-600"
                         : "bg-blue-50 text-blue-600"
-                      }`}
+                    }`}
                   >
                     {project.badge}
                   </span>
@@ -150,9 +155,10 @@ export default function ProductAdStatusPage() {
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      const detailPath = project.type === "design"
-                        ? `./projectDesignDetail/${project.id}`
-                        : `./projectAdDetail/${project.id}`;
+                      const detailPath =
+                        project.type === "design"
+                          ? `./projectDesignDetail/${project.id}`
+                          : `./projectAdDetail/${project.id}`;
                       navigate(detailPath);
                     }}
                     className="flex items-center gap-1.5 text-[#111827] text-xs font-black group-hover:text-blue-500 transition-colors cursor-pointer hover:underline"

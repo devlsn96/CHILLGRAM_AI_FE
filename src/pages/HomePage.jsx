@@ -39,7 +39,19 @@ const STEPS = [
   },
 ];
 
+import { apiFetch } from "@/lib/apiFetch";
+
 export default function HomePage() {
+  const handleTestApi = async () => {
+    try {
+      const res = await apiFetch("/api/users/hello");
+      const text = await res.text();
+      alert(`API Response: ${text}`);
+    } catch (e) {
+      alert(`API Error: ${e.message}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <main>
@@ -55,6 +67,11 @@ export default function HomePage() {
               <br />
               SNS 게시부터 성과 분석까지 한 번에 관리하는 올인원 플랫폼
             </p>
+            <div className="mt-8 flex justify-center gap-4">
+              <Button onClick={handleTestApi} className="bg-red-500 text-white hover:bg-red-600">
+                Backend API Test
+              </Button>
+            </div>
           </Container>
         </section>
 

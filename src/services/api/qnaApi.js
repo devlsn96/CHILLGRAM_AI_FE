@@ -34,8 +34,6 @@ export async function createQuestion(payload) {
     formData.append("title", payload.title);
     formData.append("body", payload.content); // 백엔드 통일: content -> body
     formData.append("category", payload.categoryId); // 백엔드는 "category" 필드명 사용
-    formData.append("companyId", payload.companyId);
-    formData.append("createdBy", payload.createdBy);
     if (payload.file) {
         formData.append("file", payload.file);
     }

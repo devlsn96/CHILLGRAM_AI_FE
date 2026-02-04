@@ -42,8 +42,6 @@ export default function QnaWritePage() {
       title,
       content,
       categoryId: Number(category), // 숫자로 변환
-      companyId: user?.companyId || 1, // 사용자 회사 ID
-      createdBy: user?.id || user?.userId || user?.user_id || 1, // 작성자 ID
       file, // 첨부 파일 (선택)
     });
   };

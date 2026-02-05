@@ -59,13 +59,13 @@ export default function ProductManagementPage() {
     },
     {
       title: "활성 제품",
-      value: statsData?.activeProducts || products.filter((p) => p.status === "활성").length,
+      value: products.filter((p) => p.status === "활성").length,
       icon: CheckCircle,
       color: "text-green-500",
     },
     {
       title: "비활성 제품",
-      value: statsData?.inactiveProducts || products.filter((p) => p.status === "비활성").length,
+      value: products.length - products.filter((p) => p.status === "활성").length,
       icon: XCircle,
       color: "text-gray-400",
     },

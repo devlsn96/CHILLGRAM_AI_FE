@@ -36,9 +36,11 @@ const DUMMY_RESULTS = [
     id: "p-1",
     type: "product",
     title: "프리미엄 초콜릿 제품 이미지",
-    description: "고급스러운 분위기의 제품 사진",
+    description: "고급스러운 촬영 및 제품 소개 사진",
     size: "1080 x 1080",
     format: "PNG",
+    date: "2024-01-20",
+    status: "활성",
   },
   {
     id: "p-2",
@@ -47,14 +49,20 @@ const DUMMY_RESULTS = [
     description: "디테일을 강조한 제품 사진",
     size: "1200 x 900",
     format: "PNG",
+    date: "2024-01-20",
+    status: "활성",
   },
   {
     id: "sns-1",
     type: "sns",
-    title: "SNS 피드 이미지 1",
-    description: "시선을 끄는 문구 강조",
+    title: "인스타그램 #두쫀쿠 이미지",
+    description: "감성적인 스타일링 SNS 이미지",
     size: "1080 x 1350",
     format: "PNG",
+    date: "2024-01-20",
+    status: "활성",
+    platform: "Instagram",
+    stats: { views: 15200, likes: 856, shares: 234 },
   },
   {
     id: "sns-2",
@@ -63,14 +71,22 @@ const DUMMY_RESULTS = [
     description: "트렌디한 컬러 포인트",
     size: "1080 x 1350",
     format: "PNG",
+    date: "2024-01-18",
+    status: "활성",
+    platform: "Instagram",
+    stats: { views: 8400, likes: 423, shares: 89 },
   },
   {
     id: "shorts-1",
     type: "shorts",
-    title: "숏츠 컷 1",
-    description: "인트로 텍스트 장면",
+    title: "유튜브 쇼츠 영상",
+    description: "30초 감각적인 초콜릿 언박싱 쇼츠",
     size: "1080 x 1920",
     format: "MP4",
+    date: "2024-01-18",
+    status: "활성",
+    platform: "YouTube",
+    stats: { views: 28400, likes: 1523, shares: 445 },
   },
   {
     id: "banner-1",
@@ -79,6 +95,8 @@ const DUMMY_RESULTS = [
     description: "광고 배너용 와이드 컷",
     size: "1200 x 628",
     format: "PNG",
+    date: "2024-01-15",
+    status: "활성",
   },
 ];
 
@@ -146,15 +164,20 @@ export default function ADResultPage() {
               {headerDesc}
             </p>
           </div>
-          {/* 새 광고 생성 버튼 (프로젝트 상세에서는 숨김) */}
-          {!isProjectDetailMode && (
-            <button
-              onClick={() => navigate("./../")}
-              className="bg-[#60A5FA] hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
-            >
-              <PlusCircle className="h-4 w-4 text-white" /> 새 광고 생성
-            </button>
-          )}
+          {/* 새 광고 생성 버튼 */}
+          <button
+            onClick={() =>
+              navigate(
+                isProjectDetailMode
+                  ? `/dashboard/products/${productId}/addAD`
+                  : "./../"
+              )
+            }
+            className="bg-[#60A5FA] hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
+          >
+            <PlusCircle className="h-4 w-4 text-white" />{" "}
+            {isProjectDetailMode ? "광고 생성" : "새 광고 생성"}
+          </button>
         </div>
 
         {/* 광고 생성 완료 배너 (프로젝트 상세에서는 숨김) */}
@@ -194,40 +217,119 @@ export default function ADResultPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-stretch">
           {filteredResults.map((item) => {
             const Icon = TYPE_CONFIG[item.type].icon;
+            const isSnsOrShorts = item.type === "sns" || item.type === "shorts";
+            const isVideo = item.type === "shorts";
+
             return (
-              <Card key={item.id} className="overflow-hidden border-gray-200 shadow-sm">
-                <div className="aspect-[4/3] w-full bg-gradient-to-br from-[#F9FAFB] to-[#E5E7EB] flex items-center justify-center rounded-t-xl">
-                  <FileImage className="h-10 w-10 text-gray-300" />
+              <div
+                key={item.id}
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm h-full flex flex-col"
+              >
+                {/* 이미지 영역 - edge to edge */}
+                <div
+                  className={`aspect-[4/3] w-full flex items-center justify-center ${isVideo
+                    ? "bg-gray-800"
+                    : "bg-gradient-to-br from-[#F9FAFB] to-[#E5E7EB]"
+                    }`}
+                >
+                  {isVideo ? (
+                    <Video className="h-12 w-12 text-gray-400" />
+                  ) : (
+                    <FileImage className="h-10 w-10 text-gray-300" />
+                  )}
                 </div>
-                <div className="p-4">
-                  <div className="mb-4 flex items-center justify-between text-xs text-[#9CA3AF]">
-                    <span className="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-[11px] font-bold text-[#6B7280]">
+
+                {/* 컨텐츠 영역 */}
+                <div className="p-5 flex-grow flex flex-col">
+                  {/* 배지 행 */}
+                  <div className="mb-3 flex items-center gap-2 flex-wrap">
+                    <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-[11px] font-bold text-[#6B7280]">
                       <Icon className="h-3 w-3" /> {TYPE_CONFIG[item.type].label}
                     </span>
-                    <span className="font-semibold">{item.format}</span>
+                    {item.platform && (
+                      <span
+                        className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${item.platform === "Instagram"
+                          ? "bg-gradient-to-r from-pink-100 to-purple-100 text-pink-600"
+                          : "bg-red-100 text-red-600"
+                          }`}
+                      >
+                        {item.platform === "Instagram" ? "📷" : "▶️"} {item.platform}
+                      </span>
+                    )}
+                    <span className="ml-auto rounded-full bg-cyan-50 px-3 py-1 text-[11px] font-bold text-cyan-600">
+                      {item.status}
+                    </span>
                   </div>
-                  <h3 className="text-lg font-bold text-[#111827]">{item.title}</h3>
-                  <p className="mt-1 text-sm text-[#9CA3AF]">{item.description}</p>
-                  <div className="mt-4 flex items-center justify-between text-xs text-[#9CA3AF]">
-                    <span>{item.size}</span>
-                    <span>2024-01-25 14:30</span>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <button className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-xs font-bold text-[#6B7280] hover:bg-gray-50">
-                      <Download className="h-4 w-4" /> 다운로드
-                    </button>
-                    <button className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-xs font-bold text-[#6B7280] hover:bg-gray-50">
-                      <Share2 className="h-4 w-4" /> 공유
-                    </button>
-                    <button className="ml-auto flex items-center gap-2 rounded-xl bg-[#60A5FA] px-3 py-2 text-xs font-black text-white hover:brightness-95">
-                      <Sparkles className="h-4 w-4" /> 다운로드
-                    </button>
+
+                  {/* 타이틀 */}
+                  <h3 className="text-lg font-black text-[#111827]">{item.title}</h3>
+
+                  {/* 날짜 */}
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-400">
+                    📅 {item.date}
+                  </p>
+
+                  {/* 설명 */}
+                  <p className="mt-2 text-sm text-teal-600">{item.description}</p>
+
+                  {/* SNS/Shorts 통계 */}
+                  {isSnsOrShorts && item.stats && (
+                    <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+                      <div className="text-center">
+                        <p className="text-lg font-black text-gray-800">
+                          {item.stats.views.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-400">조회</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-black text-gray-800">
+                          {item.stats.likes.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-400">좋아요</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-black text-gray-800">
+                          {item.stats.shares.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-400">공유</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 액션 버튼 */}
+                  <div className="mt-auto pt-4 flex items-center gap-2">
+                    {isSnsOrShorts ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            navigate("/dashboard/sns", {
+                              state: { uploadContent: item },
+                            })
+                          }
+                          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-opacity"
+                        >
+                          업로드
+                        </button>
+                        <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                          <Download className="h-4 w-4" /> 다운로드
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                          상세
+                        </button>
+                        <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                          <Download className="h-4 w-4" /> 다운로드
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>

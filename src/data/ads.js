@@ -76,12 +76,11 @@ export const AD_COPY_OPTIONS = [
 
 // CONTENT_TYPE_OPTIONS >> ad.js로 분리
 export const AD_CONTENT_TYPE_OPTIONS = [
-  // {
-  //   title: "제품 이미지 AI",
-  //   description: "제품 사진을 AI로 생성",
-  //   icon: Image,
+  // {\r
+  //   title: "제품 이미지 AI",\r
+  //   description: "제품 사진을 AI로 생성",\r
+  //   icon: Image,\r
   // },
-  { title: "패키지 시안 AI", description: "패키지 디자인 시안", icon: Package },
   {
     title: "SNS 이미지 AI",
     description: "소셜미디어용 이미지",

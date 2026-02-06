@@ -86,6 +86,8 @@ export default function ADPage() {
   const [selectedGuideId, setSelectedGuideId] = useState("");
   const [selectedCopyId, setSelectedCopyId] = useState("");
   const [selectedTypes, setSelectedTypes] = useState([]);
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [bannerSize, setBannerSize] = useState("");
 
   // 서버 응답 원본
   const [guideResponse, setGuideResponse] = useState(null);
@@ -156,7 +158,8 @@ export default function ADPage() {
         productId > 0 &&
         projectTitle.trim().length > 0 &&
         Boolean(adGoal) &&
-        selectedKeywords.length > 0
+        selectedKeywords.length > 0 &&
+        attachedFile !== null
       );
     }
     if (currentStep === 2) return Boolean(selectedGuideId);
@@ -329,12 +332,12 @@ export default function ADPage() {
         currentStep === 1 && USE_GUIDE_API && isLoadingGuides
           ? "가이드 생성 중..."
           : currentStep === 2 && USE_COPY_API && isLoadingCopies
-          ? "광고 문구 생성 중..."
-          : currentStep === 4 && isCreating
-          ? "광고 생성 중..."
-          : currentStep === 4
-          ? "광고 생성 시작"
-          : "다음"
+            ? "광고 문구 생성 중..."
+            : currentStep === 4 && isCreating
+              ? "광고 생성 중..."
+              : currentStep === 4
+                ? "광고 생성 시작"
+                : "다음"
       }
     >
       <div className="mb-6">
@@ -371,6 +374,8 @@ export default function ADPage() {
             setSelectedKeywords={setSelectedKeywords}
             adFocus={adFocus}
             setAdFocus={setAdFocus}
+            attachedFile={attachedFile}
+            setAttachedFile={setAttachedFile}
           />
         )}
 
@@ -400,6 +405,8 @@ export default function ADPage() {
             tip={CONTENT_TIP}
             selectedTypes={selectedTypes}
             setSelectedTypes={setSelectedTypes}
+            bannerSize={bannerSize}
+            setBannerSize={setBannerSize}
           />
         )}
       </ErrorBoundary>

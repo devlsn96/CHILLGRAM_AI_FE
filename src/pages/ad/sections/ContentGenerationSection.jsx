@@ -6,7 +6,11 @@ export default function ContentGenerationSection({
   tip,
   selectedTypes,
   setSelectedTypes,
+  bannerSize,
+  setBannerSize,
 }) {
+  const isBannerSelected = selectedTypes.includes("배너 이미지 AI");
+
   return (
     <Card className="p-8 rounded-2xl border border-gray-200 shadow-sm">
       <div className="mb-6">
@@ -36,7 +40,7 @@ export default function ContentGenerationSection({
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {contentTypes.map((type) => {
           const Icon = type.icon;
           const selected = selectedTypes.includes(type.title);
@@ -63,6 +67,25 @@ export default function ContentGenerationSection({
           );
         })}
       </div>
+
+      {/* 배너 이미지 AI 선택 시 사이즈 입력 노출 */}
+      {isBannerSelected && (
+        <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            배너 사이즈 입력
+          </label>
+          <input
+            type="text"
+            value={bannerSize}
+            onChange={(e) => setBannerSize(e.target.value)}
+            placeholder="예: 1200x628, 300x250"
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400"
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            원하는 배너 크기를 입력하세요 (가로x세로, 예: 1200x628)
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 flex items-start gap-2 rounded-xl bg-yellow-50 p-4 text-sm text-yellow-700">
         <Lightbulb className="mt-0.5 h-4 w-4" />

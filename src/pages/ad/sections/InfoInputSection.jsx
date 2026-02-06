@@ -19,6 +19,8 @@ export default function InfoInputSection({
   setSelectedKeywords,
   adFocus,
   setAdFocus,
+  attachedFile,
+  setAttachedFile,
 }) {
   const { data, isLoading, isError, error, refetch } = useAdTrends({
     productId,
@@ -34,7 +36,7 @@ export default function InfoInputSection({
   console.log("productId", productId, "enabled", Boolean(productId), "baseDate", baseDate);
 
   const TITLE_MAX = 200;
-  
+
   return (
     <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* LEFT */}
@@ -95,6 +97,38 @@ export default function InfoInputSection({
             minHeight={160}
             variant="neutral"
           />
+
+          {/* 첨부파일 (이미지) - 필수 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              첨부파일 <span className="text-red-500">*</span>
+            </label>
+            <div className="flex items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors">
+                <span className="text-lg">+</span>
+                이미지 선택
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/gif,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && setAttachedFile) {
+                      setAttachedFile(file);
+                    }
+                  }}
+                />
+              </label>
+              {attachedFile && (
+                <span className="text-sm text-gray-500 truncate max-w-[200px]">
+                  {attachedFile.name}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-400">
+              참고용 이미지를 첨부하세요 (PNG, JPG, GIF, WebP)
+            </p>
+          </div>
         </div>
       </Card>
 

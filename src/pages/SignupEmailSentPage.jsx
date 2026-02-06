@@ -9,10 +9,10 @@ export default function SignupEmailSentPage() {
   const email = location.state?.email ?? "";
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-[#EAF7E6]">
+    <main className="min-h-[calc(100vh-64px)] bg-[#DEEEFF]">
       <section className="mx-auto flex max-w-xl flex-col items-center px-6 py-20 text-center">
         <div className="w-full rounded-[32px] bg-white px-10 py-12 shadow-xl">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#61AFFE]/10 text-[#61AFFE]">
             <CheckCircle className="h-6 w-6" />
           </div>
 
@@ -41,7 +41,7 @@ export default function SignupEmailSentPage() {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="mt-8 w-full rounded-xl bg-[#5BF22F] px-6 py-3 text-sm font-black text-black hover:brightness-95"
+            className="mt-8 w-full rounded-xl bg-[#61AFFE] px-6 py-3 text-sm font-black text-white hover:brightness-95"
           >
             로그인 페이지로 돌아가기
           </button>

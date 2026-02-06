@@ -16,7 +16,13 @@ import Container from "@/components/common/Container";
 import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
-import { fetchProducts, createProduct, updateProduct, deleteProduct, fetchProductStats } from "@/services/api/productApi";
+import {
+  fetchProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  fetchProductStats,
+} from "@/services/api/productApi";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function ProductManagementPage() {
@@ -33,7 +39,11 @@ export default function ProductManagementPage() {
   const [activeTab, setActiveTab] = useState("전체");
 
   // 1. 제품 목록 조회
-  const { data: productsData, isLoading, isError } = useQuery({
+  const {
+    data: productsData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["products"],
     queryFn: () => fetchProducts({ page: 0, size: 10 }),
     enabled: bootstrapped,
@@ -65,7 +75,8 @@ export default function ProductManagementPage() {
     },
     {
       title: "비활성 제품",
-      value: products.length - products.filter((p) => p.status === "활성").length,
+      value:
+        products.length - products.filter((p) => p.status === "활성").length,
       icon: XCircle,
       color: "text-gray-400",
     },
@@ -81,7 +92,7 @@ export default function ProductManagementPage() {
     },
     onError: (err) => {
       alert(err.message);
-    }
+    },
   });
 
   // 제품 수정 Mutation
@@ -94,7 +105,7 @@ export default function ProductManagementPage() {
     },
     onError: (err) => {
       alert(err.message);
-    }
+    },
   });
 
   // 제품 삭제 Mutation
@@ -106,7 +117,7 @@ export default function ProductManagementPage() {
     },
     onError: (err) => {
       alert(err.message);
-    }
+    },
   });
 
   // 검색 및 탭에 따른 필터링 로직
@@ -134,7 +145,6 @@ export default function ProductManagementPage() {
   return (
     <div className="min-h-full bg-[#F5F7FA] py-12">
       <Container>
-
         <div className="flex justify-between items-start mb-12">
           <div>
             <h1 className="text-4xl font-black text-[#111827] mb-2 tracking-tighter">
@@ -225,7 +235,10 @@ export default function ProductManagementPage() {
                 <tbody>
                   {isLoading && (
                     <tr>
-                      <td colSpan="6" className="py-8 text-center text-gray-400">
+                      <td
+                        colSpan="6"
+                        className="py-8 text-center text-gray-400"
+                      >
                         로딩 중...
                       </td>
                     </tr>
@@ -237,64 +250,74 @@ export default function ProductManagementPage() {
                       </td>
                     </tr>
                   )}
-                  {!isLoading && !isError && filteredProducts.map((product) => {
-                    const productId = product.productId || product.product_id || product.id; // ID 호환성
-                    const isStatusActive = product.status === "활성";
-                    const dateStr = (product.createdAt || product.created_at || "").substring(0, 10);
+                  {!isLoading &&
+                    !isError &&
+                    filteredProducts.map((product) => {
+                      const productId =
+                        product.productId || product.product_id || product.id; // ID 호환성
+                      const isStatusActive = product.status === "활성";
+                      const dateStr = (
+                        product.createdAt ||
+                        product.created_at ||
+                        ""
+                      ).substring(0, 10);
 
-                    return (
-                      <tr
-                        key={productId}
-                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() =>
-                          navigate(`/dashboard/products/${productId}`)
-                        }
-                      >
-                        <td className="py-4 px-4 text-sm font-medium text-gray-900">
-                          {product.name}
-                        </td>
-                        <td className="py-4 px-4 text-sm text-gray-600">
-                          {product.category}
-                        </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 block line-clamp-1">
-                          {product.description || "-"}
-                        </td>
-                        <td className="py-4 px-4">
-                          {isStatusActive ? (
-                            <span className="bg-cyan-50 text-cyan-600 px-2.5 py-1 rounded text-xs font-bold">
-                              활성
-                            </span>
-                          ) : (
-                            <span className="bg-gray-100 text-gray-500 px-2.5 py-1 rounded text-xs font-bold">
-                              비활성
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-4 px-4 text-sm text-gray-600 font-medium">
-                          {dateStr}
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={(e) => handleEditOpen(e, product)}
-                              className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                              <Edit2 size={18} />
-                            </button>
-                            <button
-                              onClick={(e) => handleDelete(e, productId)}
-                              className="text-red-400 hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                      return (
+                        <tr
+                          key={productId}
+                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() =>
+                            navigate(`/dashboard/products/${productId}`)
+                          }
+                        >
+                          <td className="py-4 px-4 text-sm font-medium text-gray-900">
+                            {product.name}
+                          </td>
+                          <td className="py-4 px-4 text-sm text-gray-600">
+                            {product.category}
+                          </td>
+                          <td className="py-4 px-4 text-sm text-gray-600 block line-clamp-1">
+                            {product.description || "-"}
+                          </td>
+                          <td className="py-4 px-4">
+                            {isStatusActive ? (
+                              <span className="bg-cyan-50 text-cyan-600 px-2.5 py-1 rounded text-xs font-bold">
+                                활성
+                              </span>
+                            ) : (
+                              <span className="bg-gray-100 text-gray-500 px-2.5 py-1 rounded text-xs font-bold">
+                                비활성
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-4 px-4 text-sm text-gray-600 font-medium">
+                            {dateStr}
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex justify-center gap-2">
+                              <button
+                                onClick={(e) => handleEditOpen(e, product)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                              <button
+                                onClick={(e) => handleDelete(e, productId)}
+                                className="text-red-400 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   {!isLoading && !isError && filteredProducts.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="py-20 text-center text-gray-400 text-sm">
+                      <td
+                        colSpan="6"
+                        className="py-20 text-center text-gray-400 text-sm"
+                      >
                         검색 결과가 없습니다
                       </td>
                     </tr>
@@ -325,7 +348,10 @@ export default function ProductManagementPage() {
           initialData={selectedProduct}
           onClose={() => setIsEditModalOpen(false)}
           onSubmit={(data) => {
-            const pid = selectedProduct.productId || selectedProduct.product_id || selectedProduct.id;
+            const pid =
+              selectedProduct.productId ||
+              selectedProduct.product_id ||
+              selectedProduct.id;
             updateMutation.mutate({ id: pid, payload: data });
           }}
           isSubmitting={updateMutation.isPending}
@@ -336,12 +362,19 @@ export default function ProductManagementPage() {
 }
 
 // 모달 컴포넌트
-function ProductModal({ title, confirmLabel, onClose, initialData, onSubmit, isSubmitting }) {
+function ProductModal({
+  title,
+  confirmLabel,
+  onClose,
+  initialData,
+  onSubmit,
+  isSubmitting,
+}) {
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     category: initialData?.category || "",
     description: initialData?.description || initialData?.desc || "",
-    isActive: initialData ? (initialData.status === "활성") : true,
+    isActive: initialData ? initialData.status === "활성" : true,
   });
 
   const isEdit = !!initialData;
@@ -361,9 +394,7 @@ function ProductModal({ title, confirmLabel, onClose, initialData, onSubmit, isS
         </button>
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">
-            {title}
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">{title}</h2>
           <p className="text-gray-500 text-sm">
             {isEdit ? "제품 정보를 수정하세요" : "제품 정보를 입력하세요"}
           </p>
@@ -379,7 +410,9 @@ function ProductModal({ title, confirmLabel, onClose, initialData, onSubmit, isS
               type="text"
               placeholder="프리미엄 초콜릿"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               className="w-full bg-gray-100 hover:bg-gray-50 focus:bg-white border-0 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
             />
           </div>
@@ -393,7 +426,9 @@ function ProductModal({ title, confirmLabel, onClose, initialData, onSubmit, isS
               type="text"
               placeholder="초콜릿"
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
               className="w-full bg-gray-100 hover:bg-gray-50 focus:bg-white border-0 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
             />
           </div>
@@ -407,7 +442,9 @@ function ProductModal({ title, confirmLabel, onClose, initialData, onSubmit, isS
               rows={3}
               placeholder={isEdit ? "" : "제품에 대한 설명을 입력하세요"}
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="w-full bg-gray-100 hover:bg-gray-50 focus:bg-white border-0 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm resize-none"
             />
           </div>

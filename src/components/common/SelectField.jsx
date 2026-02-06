@@ -14,7 +14,7 @@ export function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-16 w-full rounded-lg bg-primary/5 px-6 text-sm outline-none ring-0 focus:ring-2 focus:ring-primary"
+        className="h-12 w-full rounded-lg bg-primary/5 px-6 text-sm outline-none ring-0 focus:ring-2 focus:ring-primary"
       >
         <option value="">{placeholder}</option>
         {options.map((opt) => (

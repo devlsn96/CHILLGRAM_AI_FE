@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export function ConsentSection({ value, onChange }) {
   return (
-    <div className="rounded-lg bg-gray-50 p-4">
+    <div className="">
       <label className="flex items-start gap-3">
         <input
           type="checkbox"

@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { refreshApi } from "@/data/authApi";
 import PrivateRoute from "@/routes/PrivateRoute";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import ScrollToTop from "@/components/common/ScrollToTop";
 
 import SignupPage from "@/pages/SignupPage";
 import SignupEmailSentPage from "@/pages/SignupEmailSentPage";
@@ -55,6 +56,7 @@ export default function App() {
   return (
     <Layout>
       <ErrorBoundary>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />

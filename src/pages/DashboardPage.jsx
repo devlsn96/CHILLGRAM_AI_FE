@@ -6,6 +6,7 @@ import {
   Share2,
   FileText,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 import Container from "@/components/common/Container";
 import Card from "@/components/common/Card";
@@ -22,19 +23,18 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-full bg-[#F9FAFB] py-12">
+    <div className="min-h-full bg-[#F9FAFB] py-8">
       <Container>
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-5xl font-black text-[#3b312b]">대시보드</h1>
-
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-black text-[#3b312b]">대시보드</h1>
           </div>
           <p className="text-lg text-gray-500 font-medium">
             환영합니다, {user?.name ?? "사용자"}님!
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
           <StatItem
             title="진행 중 프로젝트"
             value="3"
@@ -53,14 +53,13 @@ export default function DashboardPage() {
             icon={TrendingUp}
             color="text-purple-500"
           />
-
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <ErrorBoundary>
               <Card className="h-full border-gray-200 shadow-sm">
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                <h2 className="text-xl font-bold text-gray-800 mb-1">
                   최근 활동
                 </h2>
                 <p className="text-sm text-gray-400 mb-8">
@@ -70,7 +69,7 @@ export default function DashboardPage() {
                   {activities.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex justify-between items-center p-6 bg-[#F9FAFB] rounded-3xl hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="flex justify-between items-center p-5 bg-[#F9FAFB] rounded-3xl hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <div>
                         <div className="font-bold text-gray-800 text-lg">
@@ -91,7 +90,7 @@ export default function DashboardPage() {
           <div>
             <ErrorBoundary>
               <Card className="h-full border-gray-200 shadow-sm">
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                <h2 className="text-xl font-bold text-gray-800 mb-1">
                   바로 시작하기
                 </h2>
                 <p className="text-sm text-gray-400 mb-8">
@@ -125,14 +124,14 @@ export default function DashboardPage() {
 
 function StatItem({ title, value, icon: Icon, color }) {
   return (
-    <Card className="flex h-44 flex-col justify-between border-gray-200 shadow-sm">
+    <Card className="flex h-32 flex-col justify-between border-gray-200 shadow-sm">
       <div className="flex items-start justify-between">
         <span className="text-sm font-bold tracking-tight text-gray-400">
           {title}
         </span>
         {Icon && <Icon size={22} className={color} strokeWidth={2.5} />}
       </div>
-      <div className="text-4xl font-black text-gray-900">{value}</div>
+      <div className="text-3xl font-black text-gray-900">{value}</div>
     </Card>
   );
 }
@@ -141,7 +140,7 @@ function QuickButton({ icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full py-5 bg-white border border-gray-200 rounded-2xl font-bold text-gray-700 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm"
+      className="w-full py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-700 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm"
     >
       {Icon && <Icon size={20} className="text-gray-400" />}
       {label}

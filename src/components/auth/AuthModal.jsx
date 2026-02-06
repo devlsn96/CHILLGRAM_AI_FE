@@ -26,12 +26,12 @@ export default function AuthModal({ open, onClose }) {
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
 
       <div className="absolute inset-0 flex items-center justify-center px-4 py-10">
-        <div className="relative w-full max-w-5xl rounded-[48px] bg-white px-12 py-16 shadow-xl">
+        <div className="relative w-full max-w-lg rounded-[24px] bg-white px-8 py-10 shadow-xl">
           <button
             type="button"
             aria-label="close"
             onClick={onClose}
-            className="absolute right-10 top-10 text-5xl leading-none text-black"
+            className="absolute right-6 top-6 text-3xl leading-none text-black"
           >
             ×
           </button>

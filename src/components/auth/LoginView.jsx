@@ -12,7 +12,7 @@ function SimpleField({ label, type = "text", value, onChange, placeholder }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="h-16 w-full rounded-lg bg-[#E9FBE4] px-6 text-lg outline-none ring-0 focus:ring-2 focus:ring-[#66FF2A]"
+        className="h-12 w-full rounded-lg bg-gray-50 px-4 text-base outline-none ring-0 focus:ring-2 focus:ring-[#61AFFE]"
       />
     </label>
   );
@@ -25,8 +25,10 @@ function SimpleButton({ disabled, onClick, children }) {
       disabled={disabled}
       onClick={onClick}
       className={[
-        "mt-10 h-16 w-full rounded-lg text-2xl font-extrabold text-black",
-        disabled ? "bg-gray-200 cursor-not-allowed" : "bg-[#66FF2A] hover:brightness-95",
+        "mt-6 h-12 w-full rounded-lg text-lg font-bold text-white",
+        disabled
+          ? "bg-gray-200 cursor-not-allowed"
+          : "bg-[#61AFFE] hover:brightness-95",
       ].join(" ")}
     >
       {children}
@@ -74,11 +76,13 @@ export default function LoginView({ onGoSignup, onClose }) {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="text-center">
-        <h2 className="text-5xl font-extrabold text-[#3b312b]">로그인</h2>
-        <p className="mt-4 text-lg text-[#3b312b]/70">AI 패키지 디자인 플랫폼</p>
+        <h2 className="text-3xl font-bold text-[#3b312b]">로그인</h2>
+        <p className="mt-2 text-base text-[#3b312b]/70">
+          AI 패키지 디자인 플랫폼
+        </p>
       </div>
 
-      <div className="mt-12 space-y-10">
+      <div className="mt-8 space-y-4">
         <SimpleField
           label="아이디 (이메일)"
           value={email}
@@ -104,7 +108,7 @@ export default function LoginView({ onGoSignup, onClose }) {
         {submitting ? "로그인 중..." : "로그인"}
       </SimpleButton>
 
-      <div className="mt-10 text-center text-lg text-black/70">
+      <div className="mt-6 text-center text-sm text-black/70">
         아직 계정이 없으신가요?{" "}
         <button
           type="button"

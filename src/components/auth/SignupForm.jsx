@@ -35,17 +35,31 @@ export function SignupForm() {
   });
 
   const companiesError = companiesIsError
-    ? companiesErrorObj?.message ?? "회사 목록을 불러오지 못했습니다."
+    ? (companiesErrorObj?.message ?? "회사 목록을 불러오지 못했습니다.")
     : "";
 
   const errors = useMemo(() => {
     return {
       companyError: company.value ? null : "회사를 선택하세요.",
       nameError: name.value.trim() ? null : "이름은 필수입니다.",
-      emailError: !email.value.trim() ? "이메일을 입력하세요." : !isEmail(email.value) ? "이메일 형식이 올바르지 않습니다." : null,
-      passwordError: !password.value ? "비밀번호를 입력하세요." : !isPasswordOk(password.value) ? "비밀번호 규칙을 확인하세요." : null,
-      passwordConfirmError: !passwordConfirm.value ? "비밀번호 확인을 입력하세요." : !isPasswordMatch(password.value, passwordConfirm.value) ? "비밀번호가 일치하지 않습니다." : null,
-      consentError: privacyConsent ? null : "개인정보 수집·이용 동의는 필수입니다.",
+      emailError: !email.value.trim()
+        ? "이메일을 입력하세요."
+        : !isEmail(email.value)
+          ? "이메일 형식이 올바르지 않습니다."
+          : null,
+      passwordError: !password.value
+        ? "비밀번호를 입력하세요."
+        : !isPasswordOk(password.value)
+          ? "비밀번호 규칙을 확인하세요."
+          : null,
+      passwordConfirmError: !passwordConfirm.value
+        ? "비밀번호 확인을 입력하세요."
+        : !isPasswordMatch(password.value, passwordConfirm.value)
+          ? "비밀번호가 일치하지 않습니다."
+          : null,
+      consentError: privacyConsent
+        ? null
+        : "개인정보 수집·이용 동의는 필수입니다.",
     };
   }, [
     company.value,
@@ -57,7 +71,11 @@ export function SignupForm() {
   ]);
 
   const canSubmit = useMemo(() => {
-    return Object.values(errors).every((e) => !e) && !companiesLoading && !companiesError;
+    return (
+      Object.values(errors).every((e) => !e) &&
+      !companiesLoading &&
+      !companiesError
+    );
   }, [errors, companiesLoading, companiesError]);
 
   const touchAll = () => {
@@ -84,7 +102,11 @@ export function SignupForm() {
       navigate("/signup/sent", { state: { message: data?.message } });
     },
     onError: (err) => {
-      setGlobalError(err?.response?.data?.message ?? err?.message ?? "회원가입에 실패했습니다.");
+      setGlobalError(
+        err?.response?.data?.message ??
+          err?.message ??
+          "회원가입에 실패했습니다.",
+      );
     },
   });
 
@@ -103,7 +125,7 @@ export function SignupForm() {
 
   return (
     <form onSubmit={onSubmit}>
-      <div className="mt-12 space-y-10">
+      <div className="mt-6 space-y-4">
         <SelectField
           label="회사"
           required
@@ -113,14 +135,18 @@ export function SignupForm() {
             value: String(c.companyId),
             label: c.name,
           }))}
-          placeholder={companiesLoading ? "회사 목록 로딩 중..." : "회사를 선택하세요"}
+          placeholder={
+            companiesLoading ? "회사 목록 로딩 중..." : "회사를 선택하세요"
+          }
           touched={company.touched}
           error={company.touched ? errors.companyError : null}
           disabled={companiesLoading || !!companiesError}
         />
 
         {companiesError && (
-          <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{companiesError}</p>
+          <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+            {companiesError}
+          </p>
         )}
 
         <Field
@@ -142,7 +168,7 @@ export function SignupForm() {
           error={name.touched ? errors.nameError : null}
         />
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Field
             label="비밀번호"
             required
@@ -169,7 +195,7 @@ export function SignupForm() {
 
         <div
           className={[
-            "rounded-lg p-4",
+            "rounded-lg p-3",
             privacyTouched && errors.consentError ? "bg-red-50" : "bg-gray-50",
           ].join(" ")}
         >
@@ -181,16 +207,23 @@ export function SignupForm() {
             }}
           />
           {privacyTouched && errors.consentError && (
-            <p className="mt-2 text-sm font-medium text-red-600">{errors.consentError}</p>
+            <p className="mt-2 text-sm font-medium text-red-600">
+              {errors.consentError}
+            </p>
           )}
         </div>
 
         {globalError && (
-          <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{globalError}</p>
+          <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+            {globalError}
+          </p>
         )}
       </div>
 
-      <PrimaryButton type="submit" disabled={!canSubmit || signupMutation.isPending}>
+      <PrimaryButton
+        type="submit"
+        disabled={!canSubmit || signupMutation.isPending}
+      >
         {signupMutation.isPending ? "처리 중..." : "회원가입"}
       </PrimaryButton>
     </form>

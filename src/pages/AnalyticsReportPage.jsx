@@ -93,12 +93,12 @@ export default function AnalyticsReportPage() {
   ];
 
   return (
-    <div className="min-h-full bg-[#F5F7FA] py-12">
+    <div className="min-h-full bg-[#F5F7FA] py-8">
       <Container>
         {/* 헤더 섹션 */}
-        <div className="flex justify-between items-start mb-12">
+        <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-5xl font-black text-[#111827] mb-3">
+            <h1 className="text-3xl font-black text-[#111827] mb-3">
               분석 & 리포트
             </h1>
             <p className="text-lg text-[#9CA3AF] font-medium">
@@ -119,27 +119,27 @@ export default function AnalyticsReportPage() {
         </div>
 
         {/* 상단 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
           {stats.map((stat, i) => (
             <Card
               key={i}
-              className="flex flex-col justify-between border-gray-200 shadow-sm p-8 h-48"
+              className="flex flex-col justify-between border-gray-200 shadow-sm p-4 h-32"
             >
               <div className="flex justify-between items-start">
-                <span className="text-sm font-bold text-[#9CA3AF]">
+                <span className="text-xs font-bold text-[#9CA3AF]">
                   {stat.title}
                 </span>
-                <stat.icon size={20} className={stat.color} />
+                <stat.icon size={16} className={stat.color} />
               </div>
               <div>
-                <div className="text-3xl font-black text-[#111827] mb-2">
+                <div className="text-2xl font-black text-[#111827] mb-1">
                   {stat.value}
                 </div>
                 <div
-                  className={`text-sm font-bold ${stat.trend.startsWith("+") ? "text-green-500" : "text-red-500"}`}
+                  className={`text-xs font-bold ${stat.trend.startsWith("+") ? "text-green-500" : "text-red-500"}`}
                 >
                   {stat.trend.startsWith("+") ? "↗" : "↘"} {stat.trend}{" "}
-                  <span className="text-[#9CA3AF] ml-1 font-normal">
+                  <span className="text-[#9CA3AF] ml-0.5 font-normal text-[10px]">
                     전월 대비
                   </span>
                 </div>
@@ -170,13 +170,13 @@ export default function AnalyticsReportPage() {
         {/* 콘텐츠 영역 */}
         <div className="space-y-8">
           {activeTab === "전체 개요" && (
-            <Card className="p-10 border-gray-200 shadow-sm">
-              <h3 className="text-2xl font-black mb-2">주간 성과 트렌드</h3>
+            <Card className="p-6 border-gray-200 shadow-sm">
+              <h3 className="text-xl font-black mb-2">주간 성과 트렌드</h3>
               <p className="text-[#9CA3AF] font-medium mb-10">
                 최근 7일간의 조회수, 클릭, 전환 데이터
               </p>
               <ErrorBoundary>
-                <div className="h-[400px] w-full">
+                <div className="h-[320px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={lineData}>
                       <CartesianGrid
@@ -238,15 +238,15 @@ export default function AnalyticsReportPage() {
           )}
 
           {activeTab === "트렌드 분석" && (
-            <Card className="p-10 border-gray-200 shadow-sm">
-              <h3 className="text-2xl font-black mb-2">
+            <Card className="p-6 border-gray-200 shadow-sm">
+              <h3 className="text-xl font-black mb-2">
                 월별 매출 & ROI 트렌드
               </h3>
               <p className="text-[#9CA3AF] font-medium mb-10">
                 최근 6개월간의 매출, 광고비 추이
               </p>
               <ErrorBoundary>
-                <div className="h-[400px] w-full">
+                <div className="h-[320px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={barData}>
                       <CartesianGrid
@@ -276,9 +276,9 @@ export default function AnalyticsReportPage() {
           )}
 
           {activeTab === "플랫폼 비교" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="p-10 border-gray-200 shadow-sm">
-                <h3 className="text-2xl font-black mb-10 text-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6 border-gray-200 shadow-sm">
+                <h3 className="text-xl font-black mb-8 text-center">
                   플랫폼별 참여도
                 </h3>
                 <ErrorBoundary>
@@ -308,8 +308,8 @@ export default function AnalyticsReportPage() {
                   </div>
                 </ErrorBoundary>
               </Card>
-              <Card className="p-10 border-gray-200 shadow-sm space-y-6 flex flex-col justify-center">
-                <h3 className="text-2xl font-black mb-4">주요 지표 요약</h3>
+              <Card className="p-6 border-gray-200 shadow-sm space-y-6 flex flex-col justify-center">
+                <h3 className="text-xl font-black mb-4">주요 지표 요약</h3>
                 <ErrorBoundary>
                   <MetricBar
                     label="평균 체류 시간"
@@ -335,8 +335,8 @@ export default function AnalyticsReportPage() {
           )}
 
           {activeTab === "제품별 성과" && (
-            <Card className="p-10 border-gray-200 shadow-sm">
-              <h3 className="text-2xl font-black mb-8">제품별 판매 성과</h3>
+            <Card className="p-6 border-gray-200 shadow-sm">
+              <h3 className="text-xl font-black mb-6">제품별 판매 성과</h3>
               <ErrorBoundary>
                 <div className="space-y-8">
                   {[

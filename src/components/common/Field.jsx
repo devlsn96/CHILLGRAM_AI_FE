@@ -22,7 +22,7 @@ export function Field({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={[
-          "h-16 w-full rounded-lg px-6 text-sm outline-none ring-0",
+          "h-12 w-full rounded-lg px-6 text-sm outline-none ring-0",
           "bg-primary/5",
           "focus:ring-2",
           showError

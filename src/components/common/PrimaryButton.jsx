@@ -8,10 +8,10 @@ export function PrimaryButton({
     <button
       type={type}
       className={[
-        "mt-10 h-16 w-full rounded-lg text-2xl font-extrabold text-black",
+        "mt-6 h-12 w-full rounded-lg text-lg font-bold text-white",
         props.disabled
           ? "bg-gray-200 cursor-not-allowed"
-          : "bg-[#66FF2A] hover:brightness-95",
+          : "bg-[#61AFFE] text-white hover:brightness-95",
         className,
       ].join(" ")}
       {...props}

@@ -48,19 +48,34 @@ const AuthImage = ({ src, alt, className }) => {
 
     let active = true;
     (async () => {
-      // 1. 첫 번째 시도: 원본 URL 그대로
-      const candidates = [src];
+      const candidates = [];
 
-      // URL 보정 후보 추가 (백엔드가 경로를 잘못 줄 경우 대비)
+      // [가이드 적용] GCP VM Nginx 리버스 프록시 연동
+      // DB에 저장된 상대 경로(예: uploads/img.png) 앞에 /images/를 붙여서 요청
+      if (src && !src.startsWith("http") && !src.startsWith("data:")) {
+        const cleanSrc = src.startsWith("/") ? src.slice(1) : src;
+        // 이미 images/로 시작하지 않는 경우에만 접두어 추가
+        if (!cleanSrc.startsWith("images/")) {
+          candidates.push(`/images/${cleanSrc}`);
+        }
+      }
+
+      // 1. 원본 URL (기존 로직 유지)
+      candidates.push(src);
+
+      // 2. 기존 URL 보정 로직 (하위 호환성)
       try {
-        const urlObj = new URL(src);
-        // 만약 /qna/... 로 시작하면 -> /api/qna/..., /api/uploads/qna/... 시도
-        if (urlObj.pathname.startsWith("/qna/")) {
-          candidates.push(src.replace("/qna/", "/api/qna/"));
-          candidates.push(src.replace("/qna/", "/api/uploads/qna/"));
+        // 절대 경로(http)인 경우에만 URL 파싱 시도
+        if (src.startsWith("http")) {
+          const urlObj = new URL(src);
+          // 만약 /qna/... 로 시작하면 -> /api/qna/..., /api/uploads/qna/... 시도
+          if (urlObj.pathname.startsWith("/qna/")) {
+            candidates.push(src.replace("/qna/", "/api/qna/"));
+            candidates.push(src.replace("/qna/", "/api/uploads/qna/"));
+          }
         }
       } catch (e) {
-        // 상대 경로 등 에러 무시
+        // 에러 무시
       }
 
       for (const url of candidates) {

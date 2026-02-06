@@ -1,5 +1,5 @@
 ﻿import { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   BadgeCheck,
   Download,
@@ -11,6 +11,7 @@ import {
   Share2,
   Sparkles,
   Video,
+  ArrowLeft,
 } from "lucide-react";
 
 import Container from "@/components/common/Container";
@@ -18,7 +19,6 @@ import Card from "@/components/common/Card";
 
 const TYPE_CONFIG = {
   product: { label: "제품 이미지", icon: ImageIcon },
-  package: { label: "패키지 시안", icon: Layers },
   sns: { label: "SNS 이미지", icon: Share2 },
   shorts: { label: "숏츠", icon: Video },
   banner: { label: "배너", icon: Megaphone },
@@ -26,7 +26,6 @@ const TYPE_CONFIG = {
 
 const TYPE_TITLES = {
   product: "제품 이미지 AI",
-  package: "패키지 시안 AI",
   sns: "SNS 이미지 AI",
   shorts: "숏츠 AI",
   banner: "배너 이미지 AI",
@@ -48,14 +47,6 @@ const DUMMY_RESULTS = [
     description: "디테일을 강조한 제품 사진",
     size: "1200 x 900",
     format: "PNG",
-  },
-  {
-    id: "pkg-1",
-    type: "package",
-    title: "패키지 시안 A",
-    description: "미니멀 톤 패키지 디자인",
-    size: "1200 x 900",
-    format: "JPG",
   },
   {
     id: "sns-1",
@@ -94,8 +85,21 @@ const DUMMY_RESULTS = [
 export default function ADResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { projectId, productId } = useParams();
+
+  // location.state에서 프로젝트 이름 가져오기 (광고 생성 플로우에서 전달)
+  const projectName = location.state?.projectName || location.state?.title || null;
   const selectedTypes = location.state?.selectedTypes ?? [];
   const [activeFilter, setActiveFilter] = useState("all");
+
+  // 프로젝트 상세 모드인지 확인 (projectId가 있으면 상세 모드)
+  const isProjectDetailMode = !!projectId;
+
+  // 헤더 제목 결정
+  const headerTitle = projectName || (isProjectDetailMode ? "프로젝트 상세" : "광고 콘텐츠 생성 결과");
+  const headerDesc = isProjectDetailMode
+    ? "프로젝트에서 생성된 모든 광고 콘텐츠"
+    : "AI가 생성한 다양한 광고 콘텐츠를 확인하세요.";
 
   const filteredResults = useMemo(() => {
     const base = selectedTypes.length
@@ -123,35 +127,52 @@ export default function ADResultPage() {
   return (
     <div className="min-h-full bg-[#F9FAFB] py-12">
       <Container>
+        {/* 뒤로가기 버튼 (프로젝트 상세 모드일 때만) */}
+        {isProjectDetailMode && (
+          <div className="mb-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-500 hover:text-[#111827] font-bold px-0 hover:bg-transparent transition-colors"
+            >
+              <ArrowLeft size={20} /> 프로젝트 목록으로
+            </button>
+          </div>
+        )}
+
         <div className="mb-10 flex flex-wrap items-start justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-black text-[#111827] mb-3 tracking-tight">광고 콘텐츠 생성 결과</h1>
+            <h1 className="text-4xl font-black text-[#111827] mb-3 tracking-tight">{headerTitle}</h1>
             <p className="mt-2 text-sm font-medium text-[#9CA3AF]">
-              AI가 생성한 다양한 광고 콘텐츠를 확인하세요.
+              {headerDesc}
             </p>
           </div>
-          <button
-            onClick={() => navigate("./../")}
-            className="bg-[#60A5FA] hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
-          >
-            <PlusCircle className="h-4 w-4 text-white" /> 새 광고 생성
-          </button>
+          {/* 새 광고 생성 버튼 (프로젝트 상세에서는 숨김) */}
+          {!isProjectDetailMode && (
+            <button
+              onClick={() => navigate("./../")}
+              className="bg-[#60A5FA] hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
+            >
+              <PlusCircle className="h-4 w-4 text-white" /> 새 광고 생성
+            </button>
+          )}
         </div>
 
-        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-green-700">
-          <BadgeCheck className="mt-0.5 h-5 w-5" />
-          <div>
-            <p className="font-bold">광고 생성 완료!</p>
-            <p className="mt-1 text-xs text-green-700/80">
-              총 {stats.total}개의 콘텐츠가 생성되었습니다. 1개씩 확인해보세요.
-            </p>
+        {/* 광고 생성 완료 배너 (프로젝트 상세에서는 숨김) */}
+        {!isProjectDetailMode && (
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-green-700">
+            <BadgeCheck className="mt-0.5 h-5 w-5" />
+            <div>
+              <p className="font-bold">광고 생성 완료!</p>
+              <p className="mt-1 text-xs text-green-700/80">
+                총 {stats.total}개의 콘텐츠가 생성되었습니다. 1개씩 확인해보세요.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-6">
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
           <StatCard label="전체" value={stats.total} icon={Sparkles} />
           <StatCard label="제품 이미지" value={stats.product} icon={ImageIcon} />
-          <StatCard label="패키지 시안" value={stats.package} icon={Layers} />
           <StatCard label="SNS 이미지" value={stats.sns} icon={Share2} />
           <StatCard label="숏츠" value={stats.shorts} icon={Video} />
           <StatCard label="배너" value={stats.banner} icon={Megaphone} />
@@ -178,10 +199,10 @@ export default function ADResultPage() {
             const Icon = TYPE_CONFIG[item.type].icon;
             return (
               <Card key={item.id} className="overflow-hidden border-gray-200 shadow-sm">
-                <div className="aspect-[4/3] w-full bg-gradient-to-br from-[#F9FAFB] to-[#E5E7EB] flex items-center justify-center">
+                <div className="aspect-[4/3] w-full bg-gradient-to-br from-[#F9FAFB] to-[#E5E7EB] flex items-center justify-center rounded-t-xl">
                   <FileImage className="h-10 w-10 text-gray-300" />
                 </div>
-                <div className="p-6">
+                <div className="p-4">
                   <div className="mb-4 flex items-center justify-between text-xs text-[#9CA3AF]">
                     <span className="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-[11px] font-bold text-[#6B7280]">
                       <Icon className="h-3 w-3" /> {TYPE_CONFIG[item.type].label}
@@ -234,11 +255,10 @@ function FilterChip({ label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
-        active
-          ? "bg-white text-[#111827] shadow-md"
-          : "bg-gray-100 text-[#9CA3AF] hover:text-[#111827]"
-      }`}
+      className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${active
+        ? "bg-white text-[#111827] shadow-md"
+        : "bg-gray-100 text-[#9CA3AF] hover:text-[#111827]"
+        }`}
     >
       {label}
     </button>

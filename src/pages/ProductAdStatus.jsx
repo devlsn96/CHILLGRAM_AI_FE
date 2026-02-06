@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProduct } from "@/services/api/productApi";
+import { fetchProjectsByProduct } from "@/services/api/projectApi";
 import { useAuthStore } from "@/stores/authStore";
 import {
   ArrowLeft,
@@ -28,37 +29,28 @@ export default function ProductAdStatusPage() {
     enabled: !!productId && bootstrapped,
   });
 
+  // 프로젝트 목록 조회 (Real API)
+  const { data: projectsData, isLoading: isProjectsLoading, isError: isProjectsError } = useQuery({
+    queryKey: ["projects", productId],
+    queryFn: () => fetchProjectsByProduct(productId),
+    enabled: !!productId && bootstrapped,
+  });
+
   const currentHeader = {
     name: product?.name || "제품",
     sub: product?.description || "제품의 광고 생성 프로젝트 목록",
   };
 
-  const projects = [
-    {
-      id: 1,
-      type: "ad", // ad or design
-      badge: "광고 생성",
-      title: "발렌타인데이 캠페인",
-      date: "2024-01-20",
-      contentCount: 5,
-    },
-    {
-      id: 2,
-      type: "ad",
-      badge: "광고 생성",
-      title: "2024 신제품 홍보",
-      date: "2024-01-18",
-      contentCount: 3,
-    },
-    {
-      id: 3,
-      type: "design",
-      badge: "도안 생성",
-      title: "패키지 목업 제작",
-      date: "2024-01-15",
-      contentCount: 8,
-    },
-  ];
+  // API 응답을 UI 형식으로 매핑 (배열 또는 { projects: [...] } 형태 처리)
+  const rawProjects = Array.isArray(projectsData) ? projectsData : (projectsData?.projects || projectsData?.content || []);
+  const projects = rawProjects.map((p) => ({
+    id: p.projectId || p.project_id || p.id,
+    type: p.type === "AD" || p.projectType === "AD" ? "ad" : "design",
+    badge: p.type === "AD" || p.projectType === "AD" ? "광고 생성" : "도안 생성",
+    title: p.title || "제목 없음",
+    date: (p.createdAt || p.created_at || "").substring(0, 10),
+    contentCount: p.contentCount || p.content_count || 0,
+  }));
 
   const filteredProjects = projects.filter((p) => {
     if (activeTab === "전체") return true;
@@ -118,8 +110,8 @@ export default function ProductAdStatusPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === tab
-                  ? "bg-[#60A5FA] border-[#60A5FA] text-white shadow-md"
-                  : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                ? "bg-[#60A5FA] border-[#60A5FA] text-white shadow-md"
+                : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                 }`}
             >
               {tab}
@@ -130,7 +122,22 @@ export default function ProductAdStatusPage() {
         {/* 프로젝트 그리드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <ErrorBoundary>
-            {filteredProjects.map((project) => (
+            {isProjectsLoading && (
+              <div className="col-span-full py-20 text-center text-gray-400 text-sm">
+                로딩 중...
+              </div>
+            )}
+            {isProjectsError && (
+              <div className="col-span-full py-20 text-center text-red-400 text-sm">
+                프로젝트 목록을 불러오지 못했습니다.
+              </div>
+            )}
+            {!isProjectsLoading && !isProjectsError && filteredProjects.length === 0 && (
+              <div className="col-span-full py-20 text-center text-gray-400 text-sm">
+                아직 생성된 프로젝트가 없습니다.
+              </div>
+            )}
+            {!isProjectsLoading && !isProjectsError && filteredProjects.map((project) => (
               <div
                 key={project.id}
                 className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group"
@@ -138,8 +145,8 @@ export default function ProductAdStatusPage() {
                 <div className="mb-8">
                   <span
                     className={`inline-block px-3 py-1.5 rounded-lg text-xs font-black mb-4 ${project.type === "ad"
-                        ? "bg-purple-50 text-purple-600"
-                        : "bg-blue-50 text-blue-600"
+                      ? "bg-purple-50 text-purple-600"
+                      : "bg-blue-50 text-blue-600"
                       }`}
                   >
                     {project.badge}
@@ -164,7 +171,7 @@ export default function ProductAdStatusPage() {
                         project.type === "design"
                           ? `./projectDesignDetail/${project.id}`
                           : `./projectAdDetail/${project.id}`;
-                      navigate(detailPath);
+                      navigate(detailPath, { state: { projectName: project.title } });
                     }}
                     className="flex items-center gap-1.5 text-[#111827] text-xs font-black group-hover:text-blue-500 transition-colors cursor-pointer hover:underline"
                   >

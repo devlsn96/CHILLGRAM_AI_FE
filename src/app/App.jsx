@@ -26,7 +26,7 @@ import SnsManagementPage from "@/pages/SnsManagement.jsx";
 import ProductManagementPage from "@/pages/ProductManagement";
 import ProductAdStatusPage from "@/pages/ProductAdStatus";
 import AnalyticsReportPage from "@/pages/AnalyticsReportPage";
-import ProjectAdDetail from "@/pages/ProjectAdDetail";
+// ProjectAdDetail removed - now using ADResultPage for project details
 import ProjectDesignDetail from "@/pages/ProjectDesignDetail";
 
 import { parseJwt } from "@/utils/jwt";
@@ -81,7 +81,7 @@ export default function App() {
             />
             <Route
               path="/dashboard/products/:productId/projectAdDetail/:projectId"
-              element={<ProjectAdDetail />}
+              element={<ADResultPage />}
             />
             <Route
               path="/dashboard/products/:productId/projectDesignDetail/:projectId"

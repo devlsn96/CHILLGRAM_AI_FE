@@ -9,7 +9,7 @@ export default function Footer() {
     { name: "김채환", role: "PM • AI Modeling", github: null },
     { name: "김지윤", role: "Data Serving • AI Modeling", github: null },
     { name: "이한조", role: "FE • AI Modeling", github: null },
-    { name: "오홍찬", role: "BE • Server • AI Modeling", github: null },
+    { name: "오흥찬", role: "BE • Server • AI Modeling", github: null },
     { name: "반선우", role: "FE • AI Modeling", github: null },
   ];
 

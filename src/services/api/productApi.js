@@ -31,6 +31,7 @@ export async function createProduct(payload) {
     const bodyData = {
         name: payload.name,
         category: payload.category,
+        reviewUrl: payload.reviewUrl || "",
         description: payload.description || payload.desc || "",
         isActive: payload.isActive !== undefined ? payload.isActive : true, // boolean 값 전송
     };
@@ -54,6 +55,7 @@ export async function updateProduct(id, payload) {
     const bodyData = {
         name: payload.name,
         category: payload.category,
+        reviewUrl: payload.reviewUrl || "",
         description: payload.description || payload.desc || "",
         isActive: payload.isActive !== undefined ? payload.isActive : true, // boolean 값 전송
     };

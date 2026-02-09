@@ -21,6 +21,7 @@ export default function InfoInputSection({
   setAdFocus,
   attachedFile,
   setAttachedFile,
+  setBaseDate, 
 }) {
   const { data, isLoading, isError, error, refetch } = useAdTrends({
     productId,
@@ -138,9 +139,27 @@ export default function InfoInputSection({
           AI 이벤트 트렌드 분석
         </h2>
 
-        <p className="mt-1 text-sm text-[#9CA3AF]">
-          {baseDateText ? `기준일 ${baseDateText}` : "현재 시즌을 기준으로 추천합니다."}
-        </p>
+          {/* 기준일 선택 (Month Selector) */}
+          <div className="mt-1">
+            <SelectField
+              label="기준일"
+              value={baseDate || ""}
+              onChange={setBaseDate}
+              options={Array.from({ length: 12 }).map((_, i) => { // 몇개월까지 보일 지 여기서 조정하시면 됩니다
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, "0");
+                return {
+                  value: `${y}-${m}`,
+                  label: `${y}년 ${m}월`,
+                };
+              })}
+              placeholder="기준일을 선택하세요"
+              variant="neutral"
+            />
+          </div>
+        {/* </p> 제거 */}
 
         {/* 파란 요약 박스 */}
         <div className="mt-4 rounded-2xl bg-blue-50 px-5 py-4 text-blue-700">
@@ -178,7 +197,7 @@ export default function InfoInputSection({
 
         {/* 키워드 */}
         <h3 className="mt-8 text-base font-extrabold text-[#111827]">
-          추천 트렌드 키워드 (복수 선택 가능)
+          추천 트렌드 키워드
         </h3>
 
         <div className="mt-3 space-y-3">
@@ -205,13 +224,13 @@ export default function InfoInputSection({
                   type="checkbox"
                   className="mt-1 h-5 w-5 accent-blue-600"
                   checked={checked}
-                  onChange={() =>
-                    setSelectedKeywords((prev) =>
-                      prev.includes(k.name)
-                        ? prev.filter((x) => x !== k.name)
-                        : [...prev, k.name]
-                    )
-                  }
+                  onChange={() => {
+                    if (checked) {
+                      setSelectedKeywords([]);
+                    } else {
+                      setSelectedKeywords([k.name]);
+                    }
+                  }}
                   disabled={isLoading || isError}
                 />
 

@@ -75,6 +75,12 @@ export default function ADPage() {
 
   const [currentStep, setCurrentStep] = useState(1);
 
+  // 현재 날짜를 YYYY-MM 형식으로 초기화
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const [baseDate, setBaseDate] = useState(`${yyyy}-${mm}`);
+
   // Step1 입력
   const [adGoal, setAdGoal] = useState("");
   const [requestText, setRequestText] = useState("");
@@ -187,7 +193,7 @@ export default function ADPage() {
       try {
         const resp = await guideMutation.mutateAsync({
           productId,
-          baseDate: null,
+          baseDate,
           projectTitle,
           adGoal,
           requestText,
@@ -225,7 +231,7 @@ export default function ADPage() {
       try {
         const resp = await copyMutation.mutateAsync({
           productId,
-          baseDate: null,
+          baseDate, 
           projectTitle,
           adGoal,
           requestText,
@@ -376,6 +382,8 @@ export default function ADPage() {
             setAdFocus={setAdFocus}
             attachedFile={attachedFile}
             setAttachedFile={setAttachedFile}
+            baseDate={baseDate}
+            setBaseDate={setBaseDate}
           />
         )}
 

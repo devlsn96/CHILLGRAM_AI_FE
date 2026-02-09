@@ -373,6 +373,7 @@ function ProductModal({
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     category: initialData?.category || "",
+    reviewUrl: initialData?.reviewUrl || "",
     description: initialData?.description || initialData?.desc || "",
     isActive: initialData ? initialData.status === "활성" : true,
   });
@@ -428,6 +429,22 @@ function ProductModal({
               value={formData.category}
               onChange={(e) =>
                 setFormData({ ...formData, category: e.target.value })
+              }
+              className="w-full bg-gray-100 hover:bg-gray-50 focus:bg-white border-0 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
+            />
+          </div>
+
+          {/* 리뷰사이트 URL */}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-gray-900">
+              리뷰사이트 URL
+            </label>
+            <input
+              type="text"
+              placeholder="https://example.com/reviews"
+              value={formData.reviewUrl}
+              onChange={(e) =>
+                setFormData({ ...formData, reviewUrl: e.target.value })
               }
               className="w-full bg-gray-100 hover:bg-gray-50 focus:bg-white border-0 rounded-lg px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
             />

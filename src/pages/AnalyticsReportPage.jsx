@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Download,
   FileText,
@@ -30,6 +32,8 @@ import Container from "@/components/common/Container";
 import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import { fetchProducts } from "@/services/api/productApi";
+import { useAuthStore } from "@/stores/authStore";
 
 // --- 로컬 실행을 위한 완결된 더미 데이터 ---
 const lineData = [
@@ -59,7 +63,26 @@ const pieData = [
 ];
 
 export default function AnalyticsReportPage() {
-  const [activeTab, setActiveTab] = useState("전체 개요");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "전체 개요");
+  const [selectedProductId, setSelectedProductId] = useState(searchParams.get("productId") || "");
+  const bootstrapped = useAuthStore((s) => s.bootstrapped);
+
+  // URL 파라미터에서 탭 설정
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const productId = searchParams.get("productId");
+    if (tab) setActiveTab(tab);
+    if (productId) setSelectedProductId(productId);
+  }, [searchParams]);
+
+  // 제품 목록 조회 (리뷰 분석용)
+  const { data: productsData } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => fetchProducts({ page: 0, size: 100 }),
+    enabled: bootstrapped,
+  });
+  const products = productsData?.content || [];
 
   const stats = [
     {
@@ -150,16 +173,15 @@ export default function AnalyticsReportPage() {
 
         {/* 탭 메뉴 */}
         <div className="flex gap-2 mb-8 bg-gray-200/50 p-1.5 rounded-2xl w-fit font-bold text-sm">
-          {["전체 개요", "트렌드 분석", "플랫폼 비교", "제품별 성과"].map(
+          {["전체 개요", "트렌드 분석", "플랫폼 비교", "제품별 성과", "리뷰 분석"].map(
             (tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 rounded-xl transition-all ${
-                  activeTab === tab
-                    ? "bg-white shadow-md text-black"
-                    : "text-[#9CA3AF] hover:text-black"
-                }`}
+                className={`px-6 py-3 rounded-xl transition-all ${activeTab === tab
+                  ? "bg-white shadow-md text-black"
+                  : "text-[#9CA3AF] hover:text-black"
+                  }`}
               >
                 {tab}
               </button>
@@ -388,6 +410,113 @@ export default function AnalyticsReportPage() {
                 </div>
               </ErrorBoundary>
             </Card>
+          )}
+
+          {activeTab === "리뷰 분석" && (
+            <div className="space-y-6">
+              {/* 제품 선택 */}
+              <Card className="p-6 border-gray-200 shadow-sm">
+                <h3 className="text-xl font-black mb-4">제품별 리뷰 분석</h3>
+                <div className="flex items-center gap-4">
+                  <label className="text-sm font-bold text-gray-600">제품 선택:</label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">제품을 선택하세요</option>
+                    {products.filter(p => p.reviewUrl).map((product) => {
+                      const pid = product.productId || product.product_id || product.id;
+                      return (
+                        <option key={pid} value={pid}>
+                          {product.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </Card>
+
+              {selectedProductId ? (
+                <>
+                  {/* 감성 분석 요약 */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="p-6 border-gray-200 shadow-sm text-center">
+                      <div className="text-4xl mb-2">😊</div>
+                      <div className="text-3xl font-black text-green-500 mb-1">72%</div>
+                      <div className="text-sm font-bold text-gray-500">긍정 리뷰</div>
+                    </Card>
+                    <Card className="p-6 border-gray-200 shadow-sm text-center">
+                      <div className="text-4xl mb-2">😐</div>
+                      <div className="text-3xl font-black text-yellow-500 mb-1">18%</div>
+                      <div className="text-sm font-bold text-gray-500">중립 리뷰</div>
+                    </Card>
+                    <Card className="p-6 border-gray-200 shadow-sm text-center">
+                      <div className="text-4xl mb-2">😞</div>
+                      <div className="text-3xl font-black text-red-500 mb-1">10%</div>
+                      <div className="text-sm font-bold text-gray-500">부정 리뷰</div>
+                    </Card>
+                  </div>
+
+                  {/* 키워드 분석 */}
+                  <Card className="p-6 border-gray-200 shadow-sm">
+                    <h3 className="text-xl font-black mb-6">주요 키워드</h3>
+                    <ErrorBoundary>
+                      <div className="flex flex-wrap gap-3">
+                        {[
+                          { word: "맛있어요", count: 156, type: "positive" },
+                          { word: "가성비", count: 98, type: "positive" },
+                          { word: "재구매", count: 87, type: "positive" },
+                          { word: "선물용", count: 76, type: "neutral" },
+                          { word: "포장", count: 65, type: "neutral" },
+                          { word: "달달해요", count: 54, type: "positive" },
+                          { word: "배송빠름", count: 43, type: "positive" },
+                          { word: "양이적어요", count: 32, type: "negative" },
+                          { word: "비싸요", count: 21, type: "negative" },
+                        ].map((keyword, i) => (
+                          <span
+                            key={i}
+                            className={`px-4 py-2 rounded-full text-sm font-bold ${keyword.type === "positive"
+                              ? "bg-green-50 text-green-600"
+                              : keyword.type === "negative"
+                                ? "bg-red-50 text-red-600"
+                                : "bg-gray-100 text-gray-600"
+                              }`}
+                          >
+                            {keyword.word} ({keyword.count})
+                          </span>
+                        ))}
+                      </div>
+                    </ErrorBoundary>
+                  </Card>
+
+                  {/* 리뷰 요약 */}
+                  <Card className="p-6 border-gray-200 shadow-sm">
+                    <h3 className="text-xl font-black mb-4">AI 리뷰 요약</h3>
+                    <ErrorBoundary>
+                      <div className="bg-blue-50 rounded-2xl p-6 text-sm leading-relaxed text-gray-700">
+                        <p className="mb-4">
+                          <strong className="text-blue-600">✨ 전체 요약:</strong> 대부분의 고객들이 제품의 맛과 품질에 높은 만족도를 보이고 있습니다.
+                          특히 "맛있어요", "가성비", "재구매" 등의 키워드가 자주 언급되며, 선물용으로도 인기가 높습니다.
+                        </p>
+                        <p className="mb-4">
+                          <strong className="text-green-600">👍 긍정 포인트:</strong> 달콤한 맛, 고급스러운 포장, 빠른 배송이 주요 장점으로 꼽힙니다.
+                        </p>
+                        <p>
+                          <strong className="text-red-600">👎 개선 포인트:</strong> 일부 고객들은 양이 적다는 의견과 가격이 다소 높다는 피드백을 주었습니다.
+                        </p>
+                      </div>
+                    </ErrorBoundary>
+                  </Card>
+                </>
+              ) : (
+                <Card className="p-12 border-gray-200 shadow-sm text-center">
+                  <div className="text-6xl mb-4">📊</div>
+                  <h3 className="text-xl font-black text-gray-400 mb-2">제품을 선택하세요</h3>
+                  <p className="text-sm text-gray-400">리뷰 URL이 등록된 제품의 분석 결과를 확인할 수 있습니다</p>
+                </Card>
+              )}
+            </div>
           )}
         </div>
       </Container>

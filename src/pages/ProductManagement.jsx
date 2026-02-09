@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Package,
   Plus,
@@ -8,6 +8,7 @@ import {
   XCircle,
   X,
   Search,
+  Link,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +24,7 @@ import {
   deleteProduct,
   fetchProductStats,
 } from "@/services/api/productApi";
+import { fetchProjectsByProduct } from "@/services/api/projectApi";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function ProductManagementPage() {
@@ -51,6 +53,45 @@ export default function ProductManagementPage() {
 
   const products = productsData?.content || [];
 
+  // 프로젝트가 있는 제품 ID Set (활성 상태 판단용)
+  const [productsWithProjects, setProductsWithProjects] = useState(new Set());
+
+  // 제품 목록이 로드되면 각 제품의 프로젝트 존재 여부 확인
+  useEffect(() => {
+    if (products.length === 0) return;
+
+    const checkProjects = async () => {
+      const activeProductIds = new Set();
+
+      await Promise.all(
+        products.map(async (product) => {
+          const productId = product.productId || product.product_id || product.id;
+          try {
+            const projectsData = await fetchProjectsByProduct(productId);
+            // API 응답이 배열 또는 { projects: [...] } 형태일 수 있음
+            const rawProjects = Array.isArray(projectsData)
+              ? projectsData
+              : (projectsData?.projects || projectsData?.content || []);
+
+            // 프로젝트가 1개 이상 있으면 활성
+            if (rawProjects.length > 0) {
+              activeProductIds.add(productId);
+            }
+          } catch (e) {
+            // 프로젝트 조회 실패 시 비활성으로 처리
+          }
+        })
+      );
+
+      setProductsWithProjects(activeProductIds);
+    };
+
+    checkProjects();
+  }, [products]);
+
+  // 제품에 프로젝트가 있는지 확인하는 함수
+  const hasProjects = (productId) => productsWithProjects.has(productId);
+
   // 2. 통계 데이터 조회
   const { data: statsData } = useQuery({
     queryKey: ["productStats"],
@@ -69,14 +110,19 @@ export default function ProductManagementPage() {
     },
     {
       title: "활성 제품",
-      value: products.filter((p) => p.status === "활성").length,
+      value: products.filter((p) => {
+        const pid = p.productId || p.product_id || p.id;
+        return hasProjects(pid);
+      }).length,
       icon: CheckCircle,
       color: "text-green-500",
     },
     {
       title: "비활성 제품",
-      value:
-        products.length - products.filter((p) => p.status === "활성").length,
+      value: products.filter((p) => {
+        const pid = p.productId || p.product_id || p.id;
+        return !hasProjects(pid);
+      }).length,
       icon: XCircle,
       color: "text-gray-400",
     },
@@ -122,10 +168,13 @@ export default function ProductManagementPage() {
 
   // 검색 및 탭에 따른 필터링 로직
   const filteredProducts = products.filter((product) => {
+    const productId = product.productId || product.product_id || product.id;
     const matchesSearch = product.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === "전체" || product.status === activeTab;
+    const matchesTab = activeTab === "전체" ||
+      (activeTab === "활성" && hasProjects(productId)) ||
+      (activeTab === "비활성" && !hasProjects(productId));
     return matchesSearch && matchesTab;
   });
 
@@ -211,20 +260,22 @@ export default function ProductManagementPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[20%]">
+                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[14%]">
                       제품명
                     </th>
-                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[15%]">
+                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[10%]">
                       카테고리
                     </th>
-                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[30%]">
+                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[20%]">
                       설명
                     </th>
-                    {/* 가격 컬럼 제거 (ERD 미지원) */}
-                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[10%]">
+                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[10%] whitespace-nowrap">
                       상태
                     </th>
-                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[15%]">
+                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[12%] whitespace-nowrap">
+                      리뷰 URL
+                    </th>
+                    <th className="py-4 font-bold text-gray-500 text-xs px-4 w-[12%]">
                       등록일
                     </th>
                     <th className="py-4 font-bold text-gray-500 text-xs px-4 text-center w-[10%]">
@@ -236,7 +287,7 @@ export default function ProductManagementPage() {
                   {isLoading && (
                     <tr>
                       <td
-                        colSpan="6"
+                        colSpan="7"
                         className="py-8 text-center text-gray-400"
                       >
                         로딩 중...
@@ -245,7 +296,7 @@ export default function ProductManagementPage() {
                   )}
                   {isError && (
                     <tr>
-                      <td colSpan="6" className="py-8 text-center text-red-400">
+                      <td colSpan="7" className="py-8 text-center text-red-400">
                         제품 목록을 불러오지 못했습니다.
                       </td>
                     </tr>
@@ -255,7 +306,8 @@ export default function ProductManagementPage() {
                     filteredProducts.map((product) => {
                       const productId =
                         product.productId || product.product_id || product.id; // ID 호환성
-                      const isStatusActive = product.status === "활성";
+                      const reviewUrl = product.reviewUrl || product.review_url || product.product_url;
+                      const isStatusActive = hasProjects(productId);
                       const dateStr = (
                         product.createdAt ||
                         product.created_at ||
@@ -279,7 +331,7 @@ export default function ProductManagementPage() {
                           <td className="py-4 px-4 text-sm text-gray-600 block line-clamp-1">
                             {product.description || "-"}
                           </td>
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 whitespace-nowrap">
                             {isStatusActive ? (
                               <span className="bg-cyan-50 text-cyan-600 px-2.5 py-1 rounded text-xs font-bold">
                                 활성
@@ -288,6 +340,22 @@ export default function ProductManagementPage() {
                               <span className="bg-gray-100 text-gray-500 px-2.5 py-1 rounded text-xs font-bold">
                                 비활성
                               </span>
+                            )}
+                          </td>
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            {reviewUrl ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/dashboard/analytics?tab=리뷰분석&productId=${productId}`);
+                                }}
+                                className="flex items-center gap-1 text-blue-500 hover:text-blue-600 text-xs font-bold transition-colors"
+                              >
+                                <Link size={14} />
+                                분석 보기
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 text-xs">미등록</span>
                             )}
                           </td>
                           <td className="py-4 px-4 text-sm text-gray-600 font-medium">
@@ -315,7 +383,7 @@ export default function ProductManagementPage() {
                   {!isLoading && !isError && filteredProducts.length === 0 && (
                     <tr>
                       <td
-                        colSpan="6"
+                        colSpan="7"
                         className="py-20 text-center text-gray-400 text-sm"
                       >
                         검색 결과가 없습니다
@@ -373,7 +441,7 @@ function ProductModal({
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     category: initialData?.category || "",
-    reviewUrl: initialData?.reviewUrl || "",
+    reviewUrl: initialData?.reviewUrl || initialData?.review_url || "",
     description: initialData?.description || initialData?.desc || "",
     isActive: initialData ? initialData.status === "활성" : true,
   });

@@ -31,10 +31,13 @@ export async function createProduct(payload) {
     const bodyData = {
         name: payload.name,
         category: payload.category,
-        reviewUrl: payload.reviewUrl || "",
         description: payload.description || payload.desc || "",
-        isActive: payload.isActive !== undefined ? payload.isActive : true, // boolean 값 전송
+        isActive: payload.isActive !== undefined ? payload.isActive : true,
     };
+    // reviewUrl이 있을 때만 포함 (snake_case로 전송)
+    if (payload.reviewUrl && payload.reviewUrl.trim() !== "") {
+        bodyData.review_url = payload.reviewUrl.trim();
+    }
 
     const res = await apiFetch("/api/products", {
         method: "POST",
@@ -55,10 +58,13 @@ export async function updateProduct(id, payload) {
     const bodyData = {
         name: payload.name,
         category: payload.category,
-        reviewUrl: payload.reviewUrl || "",
         description: payload.description || payload.desc || "",
-        isActive: payload.isActive !== undefined ? payload.isActive : true, // boolean 값 전송
+        isActive: payload.isActive !== undefined ? payload.isActive : true,
     };
+    // reviewUrl이 있을 때만 포함 (snake_case로 전송)
+    if (payload.reviewUrl && payload.reviewUrl.trim() !== "") {
+        bodyData.review_url = payload.reviewUrl.trim();
+    }
 
     const res = await apiFetch(`/api/products/${id}`, {
         method: "PUT",

@@ -559,27 +559,18 @@ function ProductModal({
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="secondary"
-<<<<<<< Updated upstream
               size="sm"
               onClick={onClose}
               className="rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-=======
-              onClick={onClose}
->>>>>>> Stashed changes
             >
               취소
             </Button>
             <Button
-<<<<<<< Updated upstream
               variant="primary"
               size="sm"
               onClick={handleSubmit}
               disabled={isSubmitting}
               className="rounded-lg hover:bg-blue-500 shadow-sm transition-all disabled:opacity-50"
-=======
-              onClick={handleSubmit}
-              disabled={isSubmitting}
->>>>>>> Stashed changes
             >
               {isSubmitting ? "처리 중..." : confirmLabel}
             </Button>

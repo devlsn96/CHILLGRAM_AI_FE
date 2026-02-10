@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-import { useState, useEffect } from "react";
-=======
 import React, { useState, useEffect, useRef } from "react";
->>>>>>> Stashed changes
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -191,7 +187,6 @@ export default function AnalyticsReportPage() {
               광고 성과를 분석하고 리포트를 다운로드하세요
             </p>
           </div>
-<<<<<<< Updated upstream
           <div className="flex gap-3">
             <Button
               variant="secondary"
@@ -203,18 +198,17 @@ export default function AnalyticsReportPage() {
               onClick={handleDownloadPDF}
               variant="primary"
               className="px-6 h-12 rounded-xl font-black flex gap-2 items-center hover:brightness-95 transition-all shadow-sm"
+              disabled={!selectedProductId}
             >
               <FileText size={18} /> PDF 리포트
             </Button>
+            <Button 
+              onClick={checkApiStatus}
+              className="text-sm font-bold bg-gray-800 hover:bg-gray-700 h-12"
+            >
+              🔌 API 연결 테스트
+            </Button>
           </div>
-=======
-          <Button 
-            onClick={checkApiStatus}
-            className="text-sm font-bold bg-gray-800 hover:bg-gray-700"
-          >
-            🔌 API 연결 테스트
-          </Button>
->>>>>>> Stashed changes
         </div>
 
         {/* 상단 통계 카드 */}

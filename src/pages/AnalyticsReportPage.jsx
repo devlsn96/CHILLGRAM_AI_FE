@@ -12,6 +12,8 @@ import {
   MousePointer2,
   Users,
 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import {
   LineChart,
   Line,
@@ -62,8 +64,12 @@ const pieData = [
   { name: "YouTube", value: 15, color: "#FF0000" },
 ];
 
+// ... (imports)
+import { useRef } from "react";
+// ... (other code)
 export default function AnalyticsReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const reportRef = useRef(null);
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "전체 개요");
   const [selectedProductId, setSelectedProductId] = useState(searchParams.get("productId") || "");
   const bootstrapped = useAuthStore((s) => s.bootstrapped);
@@ -115,6 +121,22 @@ export default function AnalyticsReportPage() {
     },
   ];
 
+  const handleDownloadPDF = async () => {
+    if (!reportRef.current) return;
+    try {
+      const canvas = await html2canvas(reportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("Analytics_Report.pdf");
+    } catch (error) {
+      console.error("PDF download failed:", error);
+      alert("PDF 다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
   return (
     <div className="min-h-full bg-[#F5F7FA] py-8">
       <Container>
@@ -135,7 +157,10 @@ export default function AnalyticsReportPage() {
             >
               <Download size={18} /> Excel 다운로드
             </Button>
-            <button className="bg-[#5BF22F] text-black px-6 h-12 rounded-xl font-black flex gap-2 items-center hover:brightness-95 transition-all shadow-sm">
+            <button
+              onClick={handleDownloadPDF}
+              className="bg-[#5BF22F] text-black px-6 h-12 rounded-xl font-black flex gap-2 items-center hover:brightness-95 transition-all shadow-sm"
+            >
               <FileText size={18} /> PDF 리포트
             </button>
           </div>
@@ -190,7 +215,7 @@ export default function AnalyticsReportPage() {
         </div>
 
         {/* 콘텐츠 영역 */}
-        <div className="space-y-8">
+        <div ref={reportRef} className="space-y-8 p-4 bg-white rounded-xl">
           {activeTab === "전체 개요" && (
             <Card className="p-6 border-gray-200 shadow-sm">
               <h3 className="text-xl font-black mb-2">주간 성과 트렌드</h3>

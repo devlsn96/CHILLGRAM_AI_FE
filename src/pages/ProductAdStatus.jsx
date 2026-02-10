@@ -78,14 +78,17 @@ export default function ProductAdStatusPage() {
             <h1 className="text-4xl font-black text-[#111827] mb-3 tracking-tight">
               {currentHeader.name}
             </h1>
-            <p className="text-gray-500 font-medium text-lg">
+            <p
+              className="text-gray-500 font-medium text-lg max-w-4xl mt-2 h-14 overflow-hidden leading-7"
+              title={currentHeader.sub}
+            >
               {currentHeader.sub}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 h-fit items-end shrink-0">
             <button
               onClick={() => navigate("./addAD")}
-              className="bg-[#60A5FA] hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
+              className="bg-[#60A5FA] hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm whitespace-nowrap"
             >
               <Sparkles
                 size={18}
@@ -96,7 +99,7 @@ export default function ProductAdStatusPage() {
             </button>
             <button
               onClick={() => navigate("./addPackage")}
-              className="bg-white hover:bg-gray-50 text-[#111827] border border-gray-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 text-sm"
+              className="bg-white hover:bg-gray-50 text-[#111827] border border-gray-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 text-sm whitespace-nowrap"
             >
               <FileText size={18} /> 도안 생성
             </button>

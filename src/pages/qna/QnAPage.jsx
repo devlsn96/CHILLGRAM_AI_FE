@@ -1,13 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { User, Calendar } from "lucide-react";
 import Container from "@/components/common/Container";
 import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
-import { fetchQuestions } from "@/services/api/qnaApi";
 import { useAuthStore } from "@/stores/authStore";
+import { useQnaStore } from "@/stores/qnaStore";
 
 const CATEGORY_MAP = {
   1: "이용 방법",
@@ -44,9 +43,19 @@ const FILTER_LABEL_MAP = {
 };
 
 export default function QnAPage() {
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState(""); // 검색어 상태 추가
-  const [page, setPage] = useState(0); // 현재 페이지 (0-indexed)
+  // Zustand Store
+  const {
+    questions,
+    isLoading,
+    error: isError,
+    fetchQuestions,
+    filterStatus,
+    setFilterStatus,
+    searchQuery,
+    setSearchQuery,
+  } = useQnaStore();
+
+  const [page, setPage] = useState(0); // 현재 페이지 (0-indexed) - UI 상태는 로컬 유지
   const navigate = useNavigate();
   const bootstrapped = useAuthStore((s) => s.bootstrapped);
   const user = useAuthStore((s) => s.user);
@@ -56,30 +65,26 @@ export default function QnAPage() {
   const handleAskQuestion = () => {
     if (!isAuthenticated) {
       alert("로그인이 필요합니다.");
-      openAuthModal("/qna/new"); // 로그인 후 질문 작성 페이지로 이동
+      openAuthModal("/qna/new");
       return;
     }
     navigate("/qna/new");
   };
 
-  // 데이터 조회: 통계 및 전체 목록을 위해 충분히 큰 사이즈로 조회
-  const {
-    data: allQuestionsData,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["allQuestions"],
-    queryFn: () => fetchQuestions({ page: 0, size: 1000 }),
-    enabled: bootstrapped,
-  });
+  // 초기 데이터 로드 (mount)
+  useEffect(() => {
+    if (bootstrapped) {
+      fetchQuestions();
+    }
+  }, [bootstrapped, fetchQuestions]);
 
   // 1. 유효한 질문만 필터링 (CLOSED 제외)
   const activeQuestions = useMemo(() => {
-    const allItems = allQuestionsData?.content || [];
+    const allItems = questions || [];
     return allItems.filter((q) => q.status !== "CLOSED");
-  }, [allQuestionsData]);
+  }, [questions]);
 
-  // 2. 전체 통계 계산 (상단 카드용 - 일관성 유지)
+  // 2. 전체 통계 계산 (상단 카드용)
   const stats = useMemo(() => {
     const pendingCount = activeQuestions.filter((q) => {
       const label = STATUS_MAP[q.status] || q.status || "답변 대기";
@@ -103,13 +108,13 @@ export default function QnAPage() {
     let results = activeQuestions;
 
     // 탭 필터 적용
-    if (activeFilter === "pending") {
+    if (filterStatus === "pending") {
       results = results.filter(
-        (q) => (STATUS_MAP[q.status] || q.status) === "답변 대기",
+        (q) => (STATUS_MAP[q.status] || q.status) === "답변 대기"
       );
-    } else if (activeFilter === "done") {
+    } else if (filterStatus === "done") {
       results = results.filter(
-        (q) => (STATUS_MAP[q.status] || q.status) === "답변 완료",
+        (q) => (STATUS_MAP[q.status] || q.status) === "답변 완료"
       );
     }
 
@@ -117,12 +122,12 @@ export default function QnAPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       results = results.filter((item) =>
-        (item.title || "").toLowerCase().includes(q),
+        (item.title || "").toLowerCase().includes(q)
       );
     }
 
     return results;
-  }, [activeQuestions, activeFilter, searchQuery]);
+  }, [activeQuestions, filterStatus, searchQuery]);
 
   // 4. 필터링된 결과로 페이징 계산
   const totalPages = Math.ceil(filteredAllQuestions.length / 10) || 1;
@@ -131,22 +136,17 @@ export default function QnAPage() {
     return filteredAllQuestions.slice(start, start + 10);
   }, [filteredAllQuestions, page]);
 
-  // 5. 데이터 가공 및 매핑 (현재 페이지에 보이는 항목만)
+  // 5. 데이터 가공 및 매핑
   const mappedQuestions = useMemo(() => {
     return pagedQuestions.map((q) => {
-      // 카테고리 ID 추출 (여러 가능성 고려)
       const catId = q.categoryId || q.category_id || q.category;
       const categoryLabel =
         CATEGORY_MAP[catId] || CATEGORY_MAP[String(catId)] || "기타";
 
-      // 작성자 표시 이름 결정 (백엔드에서 새로 추가된 createdByName 필드를 최우선으로 사용)
       const authorLabel =
         q.createdByName || q.name || q.created_by || q.createdBy || "익명";
 
-      // 상태 라벨 표시용 변수 (전역 STATUS_MAP 활용)
       const statusLabel = STATUS_MAP[q.status] || q.status || "답변 대기";
-
-      // 답변 개수 결정 (API에서 개수를 주지 않으므로 목록에서는 표시하지 않음)
 
       return {
         ...q,
@@ -205,6 +205,7 @@ export default function QnAPage() {
             stroke="currentColor"
             strokeWidth="1.7"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       ),
@@ -313,7 +314,7 @@ export default function QnAPage() {
 
               <div className="flex flex-wrap gap-2">
                 {FILTERS.map((filter) => {
-                  const isActive = filter.key === activeFilter;
+                  const isActive = filter.key === filterStatus;
                   const countLabel =
                     filter.key === "all"
                       ? stats.total
@@ -324,14 +325,13 @@ export default function QnAPage() {
                     <button
                       key={filter.key}
                       onClick={() => {
-                        setActiveFilter(filter.key);
+                        setFilterStatus(filter.key);
                         setPage(0);
                       }}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                        isActive
+                      className={`rounded-full px-3 py-1 text-xs font-medium transition ${isActive
                           ? "border border-primary bg-primary text-white shadow-sm"
                           : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       {filter.label} ({countLabel})
                     </button>
@@ -356,8 +356,8 @@ export default function QnAPage() {
                   !isError &&
                   mappedQuestions.map((question) => (
                     <Link
-                      key={question.questionId}
-                      to={`/qna/${question.questionId}`}
+                      key={question.questionId || question.id}
+                      to={`/qna/${question.questionId || question.id}`}
                       className="block"
                     >
                       <Card className="border-gray-100 hover:border-primary/50 transition-colors">
@@ -428,9 +428,9 @@ export default function QnAPage() {
 
             {!isLoading && !isError && mappedQuestions.length === 0 && (
               <div className="mt-8 rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-10 text-center text-sm text-gray-400">
-                {FILTER_LABEL_MAP[activeFilter] === "전체"
+                {FILTER_LABEL_MAP[filterStatus] === "전체"
                   ? "등록된 질문이 없습니다."
-                  : `${FILTER_LABEL_MAP[activeFilter]} 상태의 질문이 없습니다.`}
+                  : `${FILTER_LABEL_MAP[filterStatus]} 상태의 질문이 없습니다.`}
               </div>
             )}
           </section>

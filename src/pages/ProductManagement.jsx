@@ -328,8 +328,10 @@ export default function ProductManagementPage() {
                           <td className="py-4 px-4 text-sm text-gray-600">
                             {product.category}
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 block line-clamp-1">
-                            {product.description || "-"}
+                          <td className="py-4 px-4 max-w-[200px]">
+                            <div className="text-sm text-gray-600 truncate" title={product.description || ""}>
+                              {product.description || "-"}
+                            </div>
                           </td>
                           <td className="py-4 px-4 whitespace-nowrap">
                             {isStatusActive ? (

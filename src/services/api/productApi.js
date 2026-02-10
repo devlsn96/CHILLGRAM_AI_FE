@@ -34,9 +34,10 @@ export async function createProduct(payload) {
         description: payload.description || payload.desc || "",
         isActive: payload.isActive !== undefined ? payload.isActive : true,
     };
-    // reviewUrl이 있을 때만 포함 (snake_case로 전송)
+    // reviewUrl이 있을 때만 포함 (snake_case + camelCase 호환)
     if (payload.reviewUrl && payload.reviewUrl.trim() !== "") {
         bodyData.review_url = payload.reviewUrl.trim();
+        bodyData.reviewUrl = payload.reviewUrl.trim();
     }
 
     const res = await apiFetch("/api/products", {
@@ -61,9 +62,10 @@ export async function updateProduct(id, payload) {
         description: payload.description || payload.desc || "",
         isActive: payload.isActive !== undefined ? payload.isActive : true,
     };
-    // reviewUrl이 있을 때만 포함 (snake_case로 전송)
+    // reviewUrl이 있을 때만 포함 (snake_case + camelCase 호환)
     if (payload.reviewUrl && payload.reviewUrl.trim() !== "") {
         bodyData.review_url = payload.reviewUrl.trim();
+        bodyData.reviewUrl = payload.reviewUrl.trim();
     }
 
     const res = await apiFetch(`/api/products/${id}`, {

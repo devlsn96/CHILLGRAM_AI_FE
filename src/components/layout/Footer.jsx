@@ -3,73 +3,59 @@ import { Link } from "react-router-dom";
 import Container from "../common/Container";
 
 export default function Footer() {
-  const teamMembers = [
-    { name: "하태욱", role: "PM • FE • BE • Data • Infra", github: null },
-    { name: "황태민", role: "PM • FE • AI Modeling", github: null },
-    { name: "김채환", role: "PM • AI Modeling", github: null },
-    { name: "김지윤", role: "Data Serving • AI Modeling", github: null },
-    { name: "이한조", role: "FE • AI Modeling", github: null },
-    { name: "오흥찬", role: "BE • Server • AI Modeling", github: null },
-    { name: "반선우", role: "FE • AI Modeling", github: null },
-  ];
-
   return (
-    <footer className="bg-[#1a1a1a] text-white py-10 mt-20">
+    <footer className="bg-black text-white py-8 mt-20 border-t border-gray-800">
       <Container>
-        <div className="flex flex-col md:flex-row justify-between gap-12">
+        {/* Top: Links */}
+        <div className="flex flex-col md:flex-row justify-between items-center border-b border-gray-800 pb-6 mb-6 text-sm text-gray-400">
+          <div className="flex flex-wrap justify-center md:justify-start gap-y-2 gap-x-6 w-full">
+            <Link to="#" className="hover:text-white transition-colors">회사소개</Link>
+            <span className="hidden md:inline text-gray-800">|</span>
+            <Link to="#" className="hover:text-white transition-colors">이용약관</Link>
+            <span className="hidden md:inline text-gray-800">|</span>
+            <Link to="/privacy" className="text-white font-bold transition-colors">개인정보처리방침</Link>
+            <span className="hidden md:inline text-gray-800">|</span>
+            {/* 이용안내 제거 */}
+            <Link to="/qna" className="hover:text-white transition-colors">고객만족센터</Link>
+          </div>
+        </div>
 
-          {/* Left Side: Brand & Description */}
-          <div className="flex flex-col gap-6 md:w-1/3">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">CHILLGRAM</h2>
-              <div className="space-y-1">
-                <p className="text-sm text-white font-medium">AIVLE School 8기 5조의 작품입니다.</p>
-                <a
-                  href="https://github.com/chillgram"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm text-white/80 hover:text-white hover:underline transition-colors block"
-                >
-                  https://github.com/chillgram
-                </a>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1 mt-auto">
-              <div className="flex items-center gap-4 text-xs font-semibold">
-                <Link to="/privacy" className="hover:text-gray-300 transition-colors">
-                  개인정보 처리방침
-                </Link>
-                <span className="w-[1px] h-3 bg-gray-500"></span>
-                <span className="hover:text-gray-300 transition-colors cursor-not-allowed">
-                  이용약관
-                </span>
-              </div>
-              <p className="text-xs text-white/70 mt-2">
-                © {new Date().getFullYear()} CHILLGRAM. All rights reserved.
-              </p>
-            </div>
+        {/* Middle: Brand & Info */}
+        <div className="text-[11px] sm:text-xs text-gray-500 leading-relaxed font-light tracking-wide">
+          <div className="mb-4">
+            <h2 className="text-xl font-black text-gray-200 tracking-tight flex items-center gap-2">
+              CHILLGRAM
+            </h2>
           </div>
 
-          {/* Right Side: Team Members */}
-          <div className="flex-1">
-            <h3 className="text-sm font-bold text-white mb-6 uppercase tracking-wider">
-              Team Chillgram
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-              {teamMembers.map((member, idx) => (
-                <div key={idx} className="flex justify-between items-center group">
-                  <span className="text-white font-medium">
-                    {member.name}
-                  </span>
-                  <span className="text-xs text-white font-medium text-right">
-                    {member.role}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-1">
+            <p className="flex flex-wrap gap-x-2 gap-y-1">
+              <span>법인명(상호) : 주식회사 칠그램</span>
+              <span className="text-gray-800">|</span>
+              <span>대표자(성명) : AIVLE 8기 5조</span>
+              <span className="text-gray-800">|</span>
+              <span>사업자 등록번호 : 123-45-67890</span>
+              <span className="text-gray-800">|</span>
+              <span>통신판매업 신고 : 제 2024-서울송파-0000 호</span>
+              <button className="bg-[#222] px-1.5 py-0.5 rounded text-[10px] border border-gray-700 hover:bg-gray-800 transition-colors ml-1">사업자정보확인</button>
+            </p>
+            <p className="flex flex-wrap gap-x-2 gap-y-1">
+              <span>주소 : 서울특별시 송파구 송파대로 123 (가락동) 칠그램빌딩 7층</span>
+              <span className="text-gray-800">|</span>
+              <span>개인정보보호 책임자 : 김칠그램</span>
+            </p>
+            <p className="flex flex-wrap gap-x-2 gap-y-1">
+              <span>호스팅제공자 : (주)칠그램</span>
+              <span className="text-gray-800">|</span>
+              <span>문의 : help@chillgram.com</span>
+              <span className="text-gray-800">|</span>
+              <span>고객센터 : 1533-0000</span>
+            </p>
           </div>
 
+          <div className="pt-4 mt-4 border-t border-gray-900/50">
+            <p className="text-[#333] font-medium text-[10px]">COPYRIGHT © CHILLGRAM. ALL RIGHTS RESERVED.</p>
+          </div>
         </div>
       </Container>
     </footer>

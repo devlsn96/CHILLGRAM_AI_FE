@@ -293,17 +293,13 @@ export default function ADPage() {
       const selectedGuide = pickSelectedGuide(guideResponse, selectedGuideId);
       const selectedCopy = pickSelectedCopy(copyResponse, selectedCopyId);
 
-      if (!selectedGuide) {
-        console.error("선택된 가이드 데이터를 찾지 못했습니다.");
-        return;
-      }
-      if (!selectedCopy) {
-        console.error("선택된 광고 문구 데이터를 찾지 못했습니다.");
+      if (!selectedGuide || !selectedCopy) return;
+      if (!attachedFile) {
+        console.error("첨부파일은 필수입니다.");
         return;
       }
 
-      // Spring으로 전달할 최종 payload (Step1~4 + Step3 결과 포함)
-      const finalPayload = {
+      const payload = {
         productId,
         productName,
         projectTitle,
@@ -311,12 +307,11 @@ export default function ADPage() {
         requestText,
         selectedKeywords,
         adFocus,
-
-        // Step2
+        baseDate,       
+        bannerSize,     
         selectedGuideId,
-        selectedGuide, // guideResponse 안의 객체 통째로
+        selectedGuide,
 
-        // Step3
         selectedCopyId,
         selectedCopy: {
           id: selectedCopy.id,
@@ -329,24 +324,16 @@ export default function ADPage() {
           selectionReason: selectedCopy.selectionReason,
         },
 
-        // Step4
         selectedTypes,
       };
 
-      try {
-        const created = await createMutation.mutateAsync(finalPayload);
+      const form = new FormData();
+      form.append("payload", JSON.stringify(payload));
+      form.append("file", attachedFile);
 
-        // 성공 시 결과 페이지로 이동
-        navigate("./result", {
-          state: {
-            ...finalPayload,
-            created, // 예: {projectId, contentIds, ...} 등
-          },
-        });
-      } catch (e) {
-        console.error(e);
-      }
-      return;
+      const created = await createMutation.mutateAsync(form);
+
+      navigate("./result", { state: { ...payload, created } });
     }
 
     // Step3 -> Step4

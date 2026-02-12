@@ -75,9 +75,12 @@ export function fetchAdCopies(payload) {
   });
 }
 
-export function createAdContents(payload) {
-  return httpJson(`/api/products/${payload.productId}/ads`, {
+export function createAdContents(productId, formData) {
+  return fetch(`/api/products/${productId}/ads`, {
     method: "POST",
-    body: payload,
+    body: formData,
+  }).then(async (res) => {
+    if (!res.ok) throw new Error(await res.text().catch(() => "create failed"));
+    return res.json();
   });
 }

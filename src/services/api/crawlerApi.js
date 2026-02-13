@@ -6,7 +6,7 @@ import { apiFetch } from "@/lib/apiFetch";
  * Payload: { coupang_url: string, max_reviews: number }
  */
 export async function registerProduct(payload) {
-  const res = await apiFetch("/api/register", {
+  const res = await apiFetch("/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -22,7 +22,7 @@ export async function registerProduct(payload) {
  * GET /status/{product_id}
  */
 export async function getProductStatus(productId) {
-  const res = await apiFetch(`/api/status/${productId}`);
+  const res = await apiFetch(`/status/${productId}`);
   if (!res.ok) throw new Error("상태 확인 실패");
   return res.json();
 }
@@ -34,21 +34,22 @@ export async function getProductStatus(productId) {
  * Response: application/pdf (blob) or JSON
  */
 export async function analyzeProduct(productId) {
-  const res = await apiFetch("/api/analyze", {
+  const res = await apiFetch("/analyze", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ product_id: productId }),
   });
-  
+
   if (!res.ok) throw new Error("분석 리포트 생성 실패");
-  
+
   // Content-Type 확인 -> PDF면 blob, 아니면 json
   const contentType = res.headers.get("Content-Type");
   if (contentType && contentType.includes("application/pdf")) {
     return res.blob();
   }
+  console.warn("Expected PDF but got:", contentType);
   return res.json();
 }
 
@@ -58,7 +59,7 @@ export async function analyzeProduct(productId) {
  * Payload: { product_id: string, max_reviews: number }
  */
 export async function crawlProduct(payload) {
-  const res = await apiFetch("/api/crawl", {
+  const res = await apiFetch("/crawl", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

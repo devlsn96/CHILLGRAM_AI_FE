@@ -65,8 +65,12 @@ const barData = [
 export default function AnalyticsReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const reportRef = useRef(null);
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "전체 개요");
-  const [selectedProductId, setSelectedProductId] = useState(searchParams.get("productId") || "");
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || "전체 개요",
+  );
+  const [selectedProductId, setSelectedProductId] = useState(
+    searchParams.get("productId") || "",
+  );
   const [isPdfOpen, setIsPdfOpen] = useState(false); // PDF 팝업 상태
   const bootstrapped = useAuthStore((s) => s.bootstrapped);
 
@@ -76,9 +80,9 @@ export default function AnalyticsReportPage() {
     const productId = searchParams.get("productId");
     if (tab) setActiveTab(tab);
     if (productId) {
-        setSelectedProductId(productId);
-        // 제품 ID가 URL에 있으면 팝업 띄우기 (약간의 지연 후)
-        setTimeout(() => setIsPdfOpen(true), 500);
+      setSelectedProductId(productId);
+      // 제품 ID가 URL에 있으면 팝업 띄우기 (약간의 지연 후)
+      setTimeout(() => setIsPdfOpen(true), 500);
     }
   }, [searchParams]);
 
@@ -125,10 +129,18 @@ export default function AnalyticsReportPage() {
     if (!selectedProductId) return;
     try {
       // 백엔드 API를 통해 PDF 생성 및 다운로드
-      const blob = await analyzeProduct(selectedProductId);
-      
+      const response = await analyzeProduct(selectedProductId);
+
+      if (!(response instanceof Blob)) {
+        console.error("PDF download failed, response is not a blob:", response);
+        // 에러 응답인 경우 메시지 표시
+        const msg =
+          response?.detail || response?.message || JSON.stringify(response);
+        throw new Error("PDF 형식이 아닙니다: " + msg);
+      }
+
       // Blob을 URL로 변환하여 다운로드 트리거
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(response);
       const a = document.createElement("a");
       a.href = url;
       a.download = `Analytics_Report_${selectedProductId}.pdf`;
@@ -141,37 +153,45 @@ export default function AnalyticsReportPage() {
       alert(`PDF 다운로드 실패: ${error.message}`);
     }
   };
-  
+
   // API 연결 테스트 핸들러 (분석/크롤러 엔드포인트 체크)
   const checkApiStatus = async () => {
     try {
       // 분석 요청 테스트 (잘못된 ID를 보내서 연결 여부만 확인)
-      const res = await apiFetch("/api/analyze", {
+      const res = await apiFetch("/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product_id: "test_connection" })
+        body: JSON.stringify({ product_id: "test_connection" }),
       });
-      
-      if (res.ok || res.status === 400 || res.status === 404 || res.status === 500) {
+
+      if (
+        res.ok ||
+        res.status === 400 ||
+        res.status === 404 ||
+        res.status === 500
+      ) {
         // 400/404/500이 뜬다는 건 서버 엔드포인트에 도달했다는 뜻
         const contentType = res.headers.get("content-type");
-        alert(`✅ 분석 서버 연결 확인됨!\n경로: /api/analyze\n응답 코드: ${res.status}\n응답 타입: ${contentType}`);
+        alert(
+          `✅ 분석 서버 연결 확인됨!\n경로: /api/analyze\n응답 코드: ${res.status}\n응답 타입: ${contentType}`,
+        );
       } else {
         alert(`⚠️ 서버 연결 불안정\n상태 코드: ${res.status}`);
       }
     } catch (error) {
-      alert(`❌ 서버 연결 실패: ${error.message}\n백엔드 주소나 프록시 설정을 확인해주세요.`);
+      alert(
+        `❌ 서버 연결 실패: ${error.message}\n백엔드 주소나 프록시 설정을 확인해주세요.`,
+      );
     }
   };
 
-
   // 제품 선택 핸들러
   const handleProductSelect = (e) => {
-      const pid = e.target.value;
-      setSelectedProductId(pid);
-      if (pid) {
-          setIsPdfOpen(true); // 제품 선택 시 팝업 오픈
-      }
+    const pid = e.target.value;
+    setSelectedProductId(pid);
+    if (pid) {
+      setIsPdfOpen(true); // 제품 선택 시 팝업 오픈
+    }
   };
 
   return (
@@ -187,7 +207,7 @@ export default function AnalyticsReportPage() {
               광고 성과를 분석하고 리포트를 다운로드하세요
             </p>
           </div>
-          <Button 
+          <Button
             onClick={checkApiStatus}
             className="text-sm font-bold bg-gray-800 hover:bg-gray-700 h-12"
           >
@@ -227,20 +247,19 @@ export default function AnalyticsReportPage() {
 
         {/* 탭 메뉴 (축소됨) */}
         <div className="flex gap-2 mb-8 bg-gray-200/50 p-1.5 rounded-2xl w-fit font-bold text-sm">
-          {["전체 개요", "트렌드 분석", "리뷰 분석"].map(
-            (tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 rounded-xl transition-all ${activeTab === tab
+          {["전체 개요", "트렌드 분석", "리뷰 분석"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-3 rounded-xl transition-all ${
+                activeTab === tab
                   ? "bg-white shadow-md text-black"
                   : "text-[#9CA3AF] hover:text-black"
-                  }`}
-              >
-                {tab}
-              </button>
-            ),
-          )}
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         {/* 콘텐츠 영역 */}
@@ -316,9 +335,7 @@ export default function AnalyticsReportPage() {
           {activeTab === "트렌드 분석" && (
             <Card className="p-6 border-gray-200 shadow-sm">
               <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xl font-black">
-                  월별 매출 & ROI 트렌드
-                </h3>
+                <h3 className="text-xl font-black">월별 매출 & ROI 트렌드</h3>
                 <Button
                   onClick={handleDownloadPDF}
                   className="bg-[#FFBB28] text-white hover:brightness-95 shadow-sm"
@@ -359,30 +376,43 @@ export default function AnalyticsReportPage() {
               </ErrorBoundary>
             </Card>
           )}
-          
+
           {activeTab === "리뷰 분석" && (
             <div className="space-y-6">
               {/* 제품 선택 */}
               <Card className="p-6 border-gray-200 shadow-sm">
                 <h3 className="text-xl font-black mb-4">제품별 리뷰 분석</h3>
                 <div className="flex items-center gap-4">
-                  <label className="text-sm font-bold text-gray-600">제품 선택:</label>
+                  <label className="text-sm font-bold text-gray-600">
+                    제품 선택:
+                  </label>
                   <select
                     value={selectedProductId}
                     onChange={handleProductSelect}
                     className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[200px]"
                   >
                     <option value="">제품을 선택하세요</option>
-                    {products.filter(p => p.reviewUrl).map((product) => {
-                      const pid = product.productId || product.product_id || product.id;
-                      return (
-                        <option key={pid} value={pid}>
-                          {product.name}
-                        </option>
-                      );
-                    })}
+                    {products
+                      .filter((p) => p.reviewUrl)
+                      .map((product) => {
+                        // 쿠팡 URL에서 실제 상품 ID 추출 (예: .../products/6062866109 -> 6062866109)
+                        const urlIdMatch =
+                          product.reviewUrl?.match(/\/products\/(\d+)/);
+                        const extractedId = urlIdMatch
+                          ? urlIdMatch[1]
+                          : product.productId ||
+                            product.product_id ||
+                            product.id;
+                        const uniqueKey =
+                          product.productId || product.product_id || product.id;
+                        return (
+                          <option key={uniqueKey} value={extractedId}>
+                            {product.name}
+                          </option>
+                        );
+                      })}
                   </select>
-                  
+
                   {/* PDF 다운로드 버튼 */}
                   <Button
                     onClick={handleDownloadPDF}
@@ -398,21 +428,32 @@ export default function AnalyticsReportPage() {
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
                   <div className="bg-white rounded-2xl w-full max-w-4xl h-[85vh] relative shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
                     <div className="flex justify-between items-center p-4 border-b border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900">PDF 리포트 (미리보기)</h3>
-                        <button
+                      <h3 className="text-lg font-bold text-gray-900">
+                        PDF 리포트 (미리보기)
+                      </h3>
+                      <button
                         onClick={() => setIsPdfOpen(false)}
                         className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-                        >
+                      >
                         <X size={24} />
-                        </button>
+                      </button>
                     </div>
                     <div className="flex-1 bg-gray-50 p-4 overflow-hidden rounded-b-2xl flex items-center justify-center">
-                        <div className="text-center text-gray-500">
-                            <FileText size={48} className="mx-auto mb-4 opacity-20" />
-                            <p className="text-xl font-bold mb-2">분석 리포트가 준비되었습니다</p>
-                            <p className="text-sm">이 영역에 실제 PDF 뷰어가 표시될 예정입니다.</p>
-                            <p className="text-xs text-gray-400 mt-2">(현재는 더미 화면입니다)</p>
-                        </div>
+                      <div className="text-center text-gray-500">
+                        <FileText
+                          size={48}
+                          className="mx-auto mb-4 opacity-20"
+                        />
+                        <p className="text-xl font-bold mb-2">
+                          분석 리포트가 준비되었습니다
+                        </p>
+                        <p className="text-sm">
+                          이 영역에 실제 PDF 뷰어가 표시될 예정입니다.
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          (현재는 더미 화면입니다)
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -424,22 +465,32 @@ export default function AnalyticsReportPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="p-6 border-gray-200 shadow-sm text-center">
                       <div className="text-4xl mb-2">😊</div>
-                      <div className="text-3xl font-black text-green-500 mb-1">72%</div>
-                      <div className="text-sm font-bold text-gray-500">긍정 리뷰</div>
+                      <div className="text-3xl font-black text-green-500 mb-1">
+                        72%
+                      </div>
+                      <div className="text-sm font-bold text-gray-500">
+                        긍정 리뷰
+                      </div>
                     </Card>
                     <Card className="p-6 border-gray-200 shadow-sm text-center">
                       <div className="text-4xl mb-2">😐</div>
-                      <div className="text-3xl font-black text-yellow-500 mb-1">18%</div>
-                      <div className="text-sm font-bold text-gray-500">중립 리뷰</div>
+                      <div className="text-3xl font-black text-yellow-500 mb-1">
+                        18%
+                      </div>
+                      <div className="text-sm font-bold text-gray-500">
+                        중립 리뷰
+                      </div>
                     </Card>
                     <Card className="p-6 border-gray-200 shadow-sm text-center">
                       <div className="text-4xl mb-2">😞</div>
-                      <div className="text-3xl font-black text-red-500 mb-1">10%</div>
-                      <div className="text-sm font-bold text-gray-500">부정 리뷰</div>
+                      <div className="text-3xl font-black text-red-500 mb-1">
+                        10%
+                      </div>
+                      <div className="text-sm font-bold text-gray-500">
+                        부정 리뷰
+                      </div>
                     </Card>
                   </div>
-
-
 
                   {/* 키워드 분석 */}
                   <Card className="p-6 border-gray-200 shadow-sm">
@@ -459,12 +510,13 @@ export default function AnalyticsReportPage() {
                         ].map((keyword, i) => (
                           <span
                             key={i}
-                            className={`px-4 py-2 rounded-full text-sm font-bold ${keyword.type === "positive"
-                              ? "bg-green-50 text-green-600"
-                              : keyword.type === "negative"
-                                ? "bg-red-50 text-red-600"
-                                : "bg-gray-100 text-gray-600"
-                              }`}
+                            className={`px-4 py-2 rounded-full text-sm font-bold ${
+                              keyword.type === "positive"
+                                ? "bg-green-50 text-green-600"
+                                : keyword.type === "negative"
+                                  ? "bg-red-50 text-red-600"
+                                  : "bg-gray-100 text-gray-600"
+                            }`}
                           >
                             {keyword.word} ({keyword.count})
                           </span>
@@ -479,14 +531,27 @@ export default function AnalyticsReportPage() {
                     <ErrorBoundary>
                       <div className="bg-blue-50 rounded-2xl p-6 text-sm leading-relaxed text-gray-700">
                         <p className="mb-4">
-                          <strong className="text-blue-600">✨ 전체 요약:</strong> 대부분의 고객들이 제품의 맛과 품질에 높은 만족도를 보이고 있습니다.
-                          특히 "맛있어요", "가성비", "재구매" 등의 키워드가 자주 언급되며, 선물용으로도 인기가 높습니다.
+                          <strong className="text-blue-600">
+                            ✨ 전체 요약:
+                          </strong>{" "}
+                          대부분의 고객들이 제품의 맛과 품질에 높은 만족도를
+                          보이고 있습니다. 특히 "맛있어요", "가성비", "재구매"
+                          등의 키워드가 자주 언급되며, 선물용으로도 인기가
+                          높습니다.
                         </p>
                         <p className="mb-4">
-                          <strong className="text-green-600">👍 긍정 포인트:</strong> 달콤한 맛, 고급스러운 포장, 빠른 배송이 주요 장점으로 꼽힙니다.
+                          <strong className="text-green-600">
+                            👍 긍정 포인트:
+                          </strong>{" "}
+                          달콤한 맛, 고급스러운 포장, 빠른 배송이 주요 장점으로
+                          꼽힙니다.
                         </p>
                         <p>
-                          <strong className="text-red-600">👎 개선 포인트:</strong> 일부 고객들은 양이 적다는 의견과 가격이 다소 높다는 피드백을 주었습니다.
+                          <strong className="text-red-600">
+                            👎 개선 포인트:
+                          </strong>{" "}
+                          일부 고객들은 양이 적다는 의견과 가격이 다소 높다는
+                          피드백을 주었습니다.
                         </p>
                       </div>
                     </ErrorBoundary>
@@ -495,8 +560,12 @@ export default function AnalyticsReportPage() {
               ) : (
                 <Card className="p-12 border-gray-200 shadow-sm text-center">
                   <div className="text-6xl mb-4">📊</div>
-                  <h3 className="text-xl font-black text-gray-400 mb-2">제품을 선택하세요</h3>
-                  <p className="text-sm text-gray-400">리뷰 URL이 등록된 제품의 분석 결과를 확인할 수 있습니다</p>
+                  <h3 className="text-xl font-black text-gray-400 mb-2">
+                    제품을 선택하세요
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    리뷰 URL이 등록된 제품의 분석 결과를 확인할 수 있습니다
+                  </p>
                 </Card>
               )}
             </div>
@@ -506,6 +575,3 @@ export default function AnalyticsReportPage() {
     </div>
   );
 }
-
-
-

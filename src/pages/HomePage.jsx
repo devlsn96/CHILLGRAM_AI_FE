@@ -15,7 +15,13 @@ const FEATURES = [
     icon: "📱",
   },
   {
-    title: "성과 분석",
+    title: "패키지 디자인",
+    description:
+      "원하는 도면에 AI로 생성한 이미지가 적용된 패키지 도면을 생성합니다.​",
+    icon: "🖼️",
+  },
+  {
+    title: "레포트 분석​",
     description:
       "인사이트 분석, 트렌드 리포트로 데이터 기반 마케팅을 실현합니다.",
     icon: "📈",
@@ -84,13 +90,13 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <div className="mt-10 grid gap-6 md:grid-cols-4">
               {FEATURES.map((feature) => (
                 <Card
                   key={feature.title}
-                  className="border-primary/10 bg-primary/5 py-6 text-center"
+                  className="bg-[#F3F3F3] py-6 text-center"
                 >
-                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center text-lg">
                     {feature.icon}
                   </div>
                   <h3 className="mt-4 text-sm font-semibold">
@@ -109,7 +115,7 @@ export default function HomePage() {
           <Container>
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-2xl font-bold">
-                CHILL GRAM만의 특화된 서비스는 이렇습니다.
+                AD Scramble만의 특화된 서비스는 이렇습니다.
               </h2>
               <p className="mt-2 text-xs text-gray-500">
                 3단계로 완성되는 패키지 디자인
@@ -134,7 +140,7 @@ export default function HomePage() {
           </Container>
         </section>
 
-        <section className="bg-primary/5 py-20">
+        <section className="bg-[#F3F3F3] py-20">
           <Container className="text-center">
             <h2 className="text-2xl font-bold">지금 바로 시작하세요</h2>
             <p className="mt-2 text-xs text-gray-500">

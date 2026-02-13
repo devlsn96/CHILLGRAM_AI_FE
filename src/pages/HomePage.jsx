@@ -94,7 +94,7 @@ export default function HomePage() {
               {FEATURES.map((feature) => (
                 <Card
                   key={feature.title}
-                  className="bg-[#F3F3F3] py-6 text-center"
+                  className="bg-[#F3F3F3] py-6 text-center "
                 >
                   <div className="mx-auto flex h-10 w-10 items-center justify-center text-lg">
                     {feature.icon}

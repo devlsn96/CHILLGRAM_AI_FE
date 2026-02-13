@@ -30,18 +30,24 @@ const FEATURES = [
 
 const STEPS = [
   {
-    title: "데이터 입력",
+    title: "데이터 기반 판단",
     description:
-      "브랜드 정보와 타깃 고객을 입력하면 AI가 시장 데이터를 자동 수집합니다.",
+      "브랜드 정보와 타깃 고객을 입력하면, AI가 시장 데이터와 트렌드를 자동 분석합니다.",
   },
   {
-    title: "디자인 생성",
+    title: "전략 컨셉 도출",
     description:
-      "LLM이 컨셉을 도출하고 생성형 AI가 다양한 디자인 시안을 제작합니다.",
+      "LLM이 분석 결과를 바탕으로, 브랜드 포지셔닝과 디자인 방향성을 구조화합니다.",
   },
   {
-    title: "평가 및 선택",
-    description: "A/B 테스트와 소비자 피드백을 통해 최종 디자인을 결정합니다.",
+    title: "생성형 AI 디자인 제작",
+    description:
+      "도출된 전략을 기반으로, 다양한 패키지 디자인 시안을 자동 생성합니다.",
+  },
+  {
+    title: "결과 분석 및 운영 기록 축적",
+    description:
+      "프로젝트 결과와 리뷰 데이터를 정리·보관하여, 다음 전략 수립의 참고 데이터로 활용합니다.",
   },
 ];
 
@@ -74,7 +80,10 @@ export default function HomePage() {
               SNS 게시부터 성과 분석까지 한 번에 관리하는 올인원 플랫폼
             </p>
             <div className="mt-8 flex justify-center gap-4">
-              <Button onClick={handleTestApi} className="bg-red-500 text-white hover:bg-red-600">
+              <Button
+                onClick={handleTestApi}
+                className="bg-red-500 text-white hover:bg-red-600"
+              >
                 Backend API Test
               </Button>
             </div>
@@ -118,7 +127,7 @@ export default function HomePage() {
                 AD Scramble만의 특화된 서비스는 이렇습니다.
               </h2>
               <p className="mt-2 text-xs text-gray-500">
-                3단계로 완성되는 패키지 디자인
+                4단계로 완성되는 AI 패키지 디자인 운영 시스템
               </p>
             </div>
 

@@ -175,6 +175,41 @@ export default function ADPage() {
     [],
   );
 
+  // 제품 이미지 더미 데이터 (3개)
+  // 제품 이미지 상태 관리 (재생성을 위해 useState 사용)
+  const [productImages, setProductImages] = useState([
+    {
+      id: "img-1",
+      url: "https://placehold.co/400x400/e0f2fe/0284c7?text=Clean+Concept",
+      label: "image1",
+    },
+    {
+      id: "img-2",
+      url: "https://placehold.co/400x400/f0fdf4/16a34a?text=Eco+Friendly",
+      label: "image2",
+    },
+    {
+      id: "img-3",
+      url: "https://placehold.co/400x400/fef2f2/dc2626?text=Vivid+Color",
+      label: "image3",
+    },
+  ]);
+
+  const [selectedProductImageId, setSelectedProductImageId] = useState("img-1");
+
+  // 이미지 전체 재생성 핸들러
+  const handleRegenerateImages = () => {
+    // 실제로는 API를 호출해야 하지만, 여기서는 더미 URL에 timestamp를 붙여 변경 효과를 줌
+    const timestamp = Date.now();
+    setProductImages((prev) =>
+      prev.map((img) => ({
+        ...img,
+        url: `${img.url.split("&t=")[0]}&t=${timestamp}`,
+      }))
+    );
+  };
+
+
   const guideMutation = useMutation({
     mutationFn: (payload) => fetchAdGuides(payload),
   });
@@ -256,7 +291,7 @@ export default function ADPage() {
         setCopyResponse(LOCAL_COPY_RESPONSE);
         setSelectedCopyId(
           LOCAL_COPY_RESPONSE.recommendedCopyId ||
-            LOCAL_COPY_RESPONSE.copies[0].id,
+          LOCAL_COPY_RESPONSE.copies[0].id,
         );
         setCurrentStep(3);
         return;
@@ -307,8 +342,8 @@ export default function ADPage() {
         requestText,
         selectedKeywords,
         adFocus,
-        baseDate,       
-        bannerSize,     
+        baseDate,
+        bannerSize,
         selectedGuideId,
         selectedGuide,
 
@@ -436,6 +471,10 @@ export default function ADPage() {
             setSelectedTypes={setSelectedTypes}
             bannerSize={bannerSize}
             setBannerSize={setBannerSize}
+            productImages={productImages}
+            selectedProductImageId={selectedProductImageId}
+            setSelectedProductImageId={setSelectedProductImageId}
+            onRegenerateImages={handleRegenerateImages}
           />
         )}
       </ErrorBoundary>

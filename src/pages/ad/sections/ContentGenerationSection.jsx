@@ -1,4 +1,4 @@
-import { Lightbulb, Image, Sparkles } from "lucide-react";
+import { Lightbulb, Image, Sparkles, RotateCw } from "lucide-react";
 import Card from "@/components/common/Card";
 import { BANNER_RATIOS } from "@/data/ads";
 
@@ -9,6 +9,10 @@ export default function ContentGenerationSection({
   setSelectedTypes,
   bannerSize,
   setBannerSize,
+  productImages = [],
+  selectedProductImageId,
+  setSelectedProductImageId,
+  onRegenerateImages,
 }) {
   const isBannerSelected = selectedTypes.includes("배너 이미지 AI");
 
@@ -27,11 +31,77 @@ export default function ContentGenerationSection({
         </div>
       </div>
 
-      <div className="mb-6 flex gap-3 rounded-lg border border-blue-400 bg-sky-50 p-4 text-blue-400">
-        <Image className="mt-0.5 h-5 w-5" />
-        <div>
-          <p className="font-semibold">제품 이미지 AI</p>
-          <p className="mt-1 text-sm">제품 사진을 AI로 생성 준비 완료!</p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Image className="h-5 w-5 text-blue-500" />
+            <h3 className="text-lg font-bold text-[#3b312b]">제품 이미지 AI</h3>
+          </div>
+          {onRegenerateImages && (
+            <button
+              onClick={onRegenerateImages}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+            >
+              <RotateCw className="w-4 h-4" />
+              이미지 다시 만들기
+            </button>
+          )}
+        </div>
+        <p className="text-sm text-[#9CA3AF] mb-4">
+          광고에 사용할 제품 이미지를 선택하세요.
+        </p>
+
+        <div className="grid grid-cols-3 gap-4">
+          {productImages.map((img) => {
+            const isSelected = selectedProductImageId === img.id;
+            return (
+              <div
+                key={img.id}
+                onClick={() => setSelectedProductImageId(img.id)}
+                className={`
+                  relative cursor-pointer rounded-xl border-2 transition-all overflow-hidden
+                  ${isSelected
+                    ? "border-blue-500 ring-2 ring-blue-100 ring-offset-2"
+                    : "border-gray-100 hover:border-gray-200"
+                  }
+                `}
+              >
+                <div className="aspect-square bg-gray-50 relative group">
+                  <img
+                    src={img.url}
+                    alt={img.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center transition-opacity">
+                      <div className="bg-blue-500 text-white rounded-full p-1.5 shadow-md transform scale-100 transition-transform">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div
+                  className={`p-3 text-center text-sm font-bold transition-colors ${isSelected ? "bg-blue-50 text-blue-600" : "bg-white text-gray-600"
+                    }`}
+                >
+                  {img.label}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

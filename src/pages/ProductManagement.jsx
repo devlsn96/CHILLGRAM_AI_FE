@@ -61,49 +61,11 @@ export default function ProductManagementPage() {
   const products = productsData?.content || [];
   const totalPages = productsData?.totalPages || 1; // 전체 페이지 수
 
-  // 프로젝트가 있는 제품 ID Set (활성 상태 판단용)
-  const [productsWithProjects, setProductsWithProjects] = useState(new Set());
-
-  // 제품 목록이 로드되면 각 제품의 프로젝트 존재 여부 확인
-  useEffect(() => {
-    // 🚨 [API 과부하 방지] 제품 하나하나마다 프로젝트 조회를 하면(N+1 문제) 서버가 멈춥니다(504 Error).
-    // 백엔드에서 리스트 조회 시 활성 여부를 같이 주도록 개선될 때까지 끕니다.
-    /*
-    if (products.length === 0) return;
-
-    const checkProjects = async () => {
-      const activeProductIds = new Set();
-
-      await Promise.all(
-        products.map(async (product) => {
-          const productId =
-            product.productId || product.product_id || product.id;
-          try {
-            const projectsData = await fetchProjectsByProduct(productId);
-            // API 응답이 배열 또는 { projects: [...] } 형태일 수 있음
-            const rawProjects = Array.isArray(projectsData)
-              ? projectsData
-              : projectsData?.projects || projectsData?.content || [];
-
-            // 프로젝트가 1개 이상 있으면 활성
-            if (rawProjects.length > 0) {
-              activeProductIds.add(productId);
-            }
-          } catch (e) {
-            // 프로젝트 조회 실패 시 비활성으로 처리
-          }
-        }),
-      );
-
-      setProductsWithProjects(activeProductIds);
-    };
-
-    checkProjects();
-    */
-  }, [products]);
-
-  // 제품에 프로젝트가 있는지 확인하는 함수
-  const hasProjects = (productId) => productsWithProjects.has(productId);
+  // 제품의 활성 상태 확인 (API 응답 필드 사용)
+  const isProductActive = (product) => {
+    if (product.isActive !== undefined) return product.isActive;
+    return product.status === "활성";
+  };
 
   // 2. 통계 데이터 조회
   const { data: statsData } = useQuery({
@@ -123,19 +85,13 @@ export default function ProductManagementPage() {
     },
     {
       title: "활성 제품",
-      value: products.filter((p) => {
-        const pid = p.productId || p.product_id || p.id;
-        return hasProjects(pid);
-      }).length,
+      value: products.filter((p) => isProductActive(p)).length,
       icon: CheckCircle,
       color: "text-green-500",
     },
     {
       title: "비활성 제품",
-      value: products.filter((p) => {
-        const pid = p.productId || p.product_id || p.id;
-        return !hasProjects(pid);
-      }).length,
+      value: products.filter((p) => !isProductActive(p)).length,
       icon: XCircle,
       color: "text-gray-400",
     },
@@ -188,10 +144,14 @@ export default function ProductManagementPage() {
     const matchesSearch = product.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+
+    // 활성 여부 판단
+    const isActive = isProductActive(product);
+
     const matchesTab =
       activeTab === "전체" ||
-      (activeTab === "활성" && hasProjects(productId)) ||
-      (activeTab === "비활성" && !hasProjects(productId));
+      (activeTab === "활성" && isActive) ||
+      (activeTab === "비활성" && !isActive);
     return matchesSearch && matchesTab;
   });
 
@@ -328,7 +288,10 @@ export default function ProductManagementPage() {
                         product.reviewUrl ||
                         product.review_url ||
                         product.product_url;
-                      const isStatusActive = hasProjects(productId);
+
+                      // 활성 상태 확인 (함수 교체)
+                      const isStatusActive = isProductActive(product);
+
                       const dateStr = (
                         product.createdAt ||
                         product.created_at ||

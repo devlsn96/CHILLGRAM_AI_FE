@@ -1,5 +1,7 @@
 ﻿import { useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProjectContentsWithAssets } from "@/services/api/contentApi";
 import {
   BadgeCheck,
   Download,
@@ -32,75 +34,6 @@ const TYPE_TITLES = {
   banner: "배너 이미지 AI",
 };
 
-const DUMMY_RESULTS = [
-  {
-    id: "p-1",
-    type: "product",
-    title: "프리미엄 초콜릿 제품 이미지",
-    description: "고급스러운 촬영 및 제품 소개 사진",
-    size: "1080 x 1080",
-    format: "PNG",
-    date: "2024-01-20",
-    status: "활성",
-  },
-  {
-    id: "p-2",
-    type: "product",
-    title: "제품 클로즈업 샷",
-    description: "디테일을 강조한 제품 사진",
-    size: "1200 x 900",
-    format: "PNG",
-    date: "2024-01-20",
-    status: "활성",
-  },
-  {
-    id: "sns-1",
-    type: "sns",
-    title: "인스타그램 #두쫀쿠 이미지",
-    description: "감성적인 스타일링 SNS 이미지",
-    size: "1080 x 1350",
-    format: "PNG",
-    date: "2024-01-20",
-    status: "활성",
-    platform: "Instagram",
-    stats: { views: 15200, likes: 856, shares: 234 },
-  },
-  {
-    id: "sns-2",
-    type: "sns",
-    title: "SNS 피드 이미지 2",
-    description: "트렌디한 컬러 포인트",
-    size: "1080 x 1350",
-    format: "PNG",
-    date: "2024-01-18",
-    status: "활성",
-    platform: "Instagram",
-    stats: { views: 8400, likes: 423, shares: 89 },
-  },
-  {
-    id: "shorts-1",
-    type: "shorts",
-    title: "유튜브 쇼츠 영상",
-    description: "30초 감각적인 초콜릿 언박싱 쇼츠",
-    size: "1080 x 1920",
-    format: "MP4",
-    date: "2024-01-18",
-    status: "생성중",
-    platform: "YouTube",
-    stats: { views: 28400, likes: 1523, shares: 445 },
-    isGenerating: true, // 영상 생성 중 상태
-  },
-  {
-    id: "banner-1",
-    type: "banner",
-    title: "배너 이미지",
-    description: "광고 배너용 와이드 컷",
-    size: "1200 x 628",
-    format: "PNG",
-    date: "2024-01-15",
-    status: "활성",
-  },
-];
 
 export default function ADResultPage() {
   const navigate = useNavigate();
@@ -124,23 +57,83 @@ export default function ADResultPage() {
     ? "프로젝트에서 생성된 모든 광고 콘텐츠"
     : "AI가 생성한 다양한 광고 콘텐츠를 확인하세요.";
 
+  // 1. 실제 데이터 조회
+  const { data: realResults = [], isLoading, isError } = useQuery({
+    queryKey: ["projectContents", projectId],
+    queryFn: () => fetchProjectContentsWithAssets(projectId),
+    enabled: !!projectId,
+  });
+
+  // 데이터 매핑 (백엔드 -> 프론트엔드 UI 형식)
+  const mappedResults = useMemo(() => {
+    return realResults.map((item) => {
+      // 1. 에셋 추출 (PRIMARY 타입 우선, 없으면 첫 번째)
+      const assets = item.assets || [];
+      const primaryAsset =
+        assets.find((a) => a.assetType === "PRIMARY") || assets[0] || {};
+
+      // 2. 이미지 URL 처리
+      const imageUrl =
+        primaryAsset.fileUrl || primaryAsset.file_url || primaryAsset.url;
+      const thumbUrl = primaryAsset.thumbUrl || primaryAsset.thumb_url;
+
+      // 3. 타입 매핑 (백엔드 ENUM -> 프론트엔드 소문자 키)
+      // IMAGE -> product (기본값)
+      // VIDEO -> shorts
+      // BANNER -> banner
+      let type = "product";
+      const contentType = (
+        item.contentType ||
+        item.content_type ||
+        ""
+      ).toUpperCase();
+
+      if (contentType === "VIDEO") type = "shorts";
+      else if (contentType === "BANNER") type = "banner";
+      else if (contentType === "SNS" || item.platform === "Instagram")
+        type = "sns"; // 플랫폼이 인스타면 SNS로 분류
+
+      return {
+        id: item.contentId || item.id,
+        type: type, // product, sns, shorts, banner
+        title: item.title,
+        description: item.body || item.description,
+        date: (item.createdAt || item.created_at || "").split("T")[0] || "-",
+        status: item.status || "활성",
+        platform: item.platform, // Instagram, YouTube, etc.
+        stats: {
+          views: item.viewCount ?? item.view_count ?? 0,
+          likes: item.likeCount ?? item.like_count ?? 0,
+          shares: item.shareCount ?? item.share_count ?? 0,
+        },
+        imageUrl,
+        thumbUrl,
+        // DRAFT 상태이거나 에셋이 없으면 생성 중으로 간주
+        isGenerating:
+          item.status === "GENERATING" ||
+          item.status === "DRAFT" ||
+          (!imageUrl && item.status !== "ACTIVE"),
+      };
+    });
+  }, [realResults]);
+
   const filteredResults = useMemo(() => {
     const base = selectedTypes.length
-      ? DUMMY_RESULTS.filter((item) =>
-          selectedTypes.includes(TYPE_TITLES[item.type]),
-        )
-      : DUMMY_RESULTS;
+      ? mappedResults.filter((item) =>
+        selectedTypes.includes(TYPE_TITLES[item.type]),
+      )
+      : mappedResults;
 
     if (activeFilter === "all") return base;
     return base.filter((item) => item.type === activeFilter);
-  }, [activeFilter, selectedTypes]);
+  }, [activeFilter, selectedTypes, mappedResults]);
 
   const stats = useMemo(() => {
     const base = selectedTypes.length
-      ? DUMMY_RESULTS.filter((item) =>
-          selectedTypes.includes(TYPE_TITLES[item.type]),
-        )
-      : DUMMY_RESULTS;
+      ? mappedResults.filter((item) =>
+        selectedTypes.includes(TYPE_TITLES[item.type]),
+      )
+      : mappedResults;
 
     return Object.keys(TYPE_CONFIG).reduce(
       (acc, key) => {
@@ -149,7 +142,7 @@ export default function ADResultPage() {
       },
       { total: base.length },
     );
-  }, [selectedTypes]);
+  }, [selectedTypes, mappedResults]);
 
   return (
     <div className="min-h-full bg-[#F9FAFB] py-12">
@@ -236,6 +229,7 @@ export default function ADResultPage() {
           ))}
         </div>
 
+        {/* 데이터 매핑 (백엔드 -> 프론트엔드 UI 형식) */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-stretch">
           {filteredResults.map((item) => {
             const Icon = TYPE_CONFIG[item.type].icon;
@@ -249,11 +243,10 @@ export default function ADResultPage() {
               >
                 {/* 이미지/영상 영역 */}
                 <div
-                  className={`aspect-4/3 w-full flex items-center justify-center ${
-                    isVideo
-                      ? "bg-gray-800"
-                      : "bg-linear-to-br from-[#F9FAFB] to-[#E5E7EB]"
-                  }`}
+                  className={`aspect-4/3 w-full flex items-center justify-center ${isVideo
+                    ? "bg-gray-800"
+                    : "bg-linear-to-br from-[#F9FAFB] to-[#E5E7EB]"
+                    }`}
                 >
                   {item.isGenerating ? (
                     // 생성 중일 때 로딩 GIF 표시
@@ -286,11 +279,10 @@ export default function ADResultPage() {
                     </span>
                     {item.platform && (
                       <span
-                        className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
-                          item.platform === "Instagram"
-                            ? "bg-linear-to-r from-pink-100 to-purple-100 text-pink-600"
-                            : "bg-red-100 text-red-600"
-                        }`}
+                        className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${item.platform === "Instagram"
+                          ? "bg-linear-to-r from-pink-100 to-purple-100 text-pink-600"
+                          : "bg-red-100 text-red-600"
+                          }`}
                       >
                         {item.platform === "Instagram" ? "📷" : "▶️"}{" "}
                         {item.platform}
@@ -398,11 +390,10 @@ function FilterChip({ label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
-        active
-          ? "bg-white text-[#111827] shadow-md"
-          : "bg-gray-100 text-[#9CA3AF] hover:text-[#111827]"
-      }`}
+      className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${active
+        ? "bg-white text-[#111827] shadow-md"
+        : "bg-gray-100 text-[#9CA3AF] hover:text-[#111827]"
+        }`}
     >
       {label}
     </button>

@@ -1,66 +1,19 @@
-import { httpJson } from "./http";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { httpForm, httpJson } from "./http";
 
 /**
- * ADPage에서 사용하는 광고 생성 API
- * 
- * {
-  "productId": "PRODUCT_001",
-  "adGoal": "BRAND_AWARENESS",
-  "requestText": "광고에 포함하고 싶은 내용",
-  "selectedKeywords": ["미니멀", "친환경"],
-  "selectedGuide": "감성적 스토리텔링",
-  "selectedCopy": "하루의 시작을 바꾸다",
-  "selectedTypes": ["SNS 이미지 AI", "배너 이미지 AI"],
-  "uploadFileName": "design.pdf"
- * }
+ * 트렌드 분석
  */
-export async function createAd({
-  productId,
-  adGoal,
-  requestText,
-  selectedKeywords,
-  selectedGuide,
-  selectedCopy,
-  selectedTypes,
-  uploadFileName,
-}) {
-  const response = await fetch(`${BASE_URL}/ads`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-    body: JSON.stringify({
-      productId,
-      adGoal,
-      requestText,
-      selectedKeywords,
-      selectedGuide,
-      selectedCopy,
-      selectedTypes,
-      uploadFileName: uploadFileName || null,
-    }),
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "광고 생성 실패");
-  }
-
-  return response.json();
-}
-
 export async function fetchAdTrends({ productId, date }) {
   const body = date ? { date } : {};
-  
   return httpJson(`/api/products/${productId}/ad-trends`, {
     method: "POST",
     body,
   });
 }
 
+/**
+ * 가이드 생성
+ */
 export function fetchAdGuides(payload) {
   return httpJson(`/api/products/${payload.productId}/ad-guides`, {
     method: "POST",
@@ -68,6 +21,9 @@ export function fetchAdGuides(payload) {
   });
 }
 
+/**
+ * 문구 생성
+ */
 export function fetchAdCopies(payload) {
   return httpJson(`/api/products/${payload.productId}/ad-copies`, {
     method: "POST",
@@ -75,12 +31,52 @@ export function fetchAdCopies(payload) {
   });
 }
 
-export function createAdContents(productId, formData) {
-  return fetch(`/api/products/${productId}/ads`, {
+/**
+ * 최종 광고 생성
+ */
+export async function createAdContents(formData) {
+  const res = await fetch(`/api/products/ads`, {
     method: "POST",
     body: formData,
-  }).then(async (res) => {
-    if (!res.ok) throw new Error(await res.text().catch(() => "create failed"));
-    return res.json();
   });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "create failed");
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+/**
+ * ✅ BASIC 잡 생성 (multipart)
+ * POST /api/projects/basic-images
+ * returns: { jobId }
+ */
+export async function createBasicImageJob({ payload, file }) {
+  const form = new FormData();
+  form.append("payload", JSON.stringify(payload));
+  form.append("file", file);
+
+  return httpForm("/api/jobs/basic-images", { method: "POST", formData: form });
+}
+
+/**
+ * ✅ 잡 조회
+ * GET /api/jobs/{jobId}
+ */
+export async function fetchJob(jobId) {
+  return httpJson(`/api/jobs/${jobId}`, { method: "GET" });
+}
+
+/**
+ * ✅ BASIC 결과(manifest) 조회
+ * - job.outputUri = public url (manifest.json)
+ */
+export async function fetchBasicImageResult(jobId) {
+  const job = await fetchJob(jobId);
+  if (!job?.outputUri) throw new Error("outputUri가 없습니다.");
+
+  const res = await fetch(job.outputUri);
+  if (!res.ok) throw new Error(await res.text().catch(() => "manifest fetch failed"));
+  return res.json();
 }

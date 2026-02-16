@@ -41,3 +41,24 @@ export async function httpJson(path, { method = "GET", body, headers } = {}) {
 
   return data;
 }
+
+// multipart/form-data 전용 (Content-Type 설정 금지: 브라우저가 boundary 붙임)
+export async function httpForm(path, { method = "POST", formData, headers } = {}) {
+  const res = await fetch(path, {
+    method,
+    headers: buildHeaders(headers),
+    body: formData,
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const err = new Error(data?.message || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.code = data?.code;
+    err.details = data?.details;
+    throw err;
+  }
+
+  return data;
+}

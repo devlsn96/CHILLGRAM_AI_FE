@@ -13,6 +13,7 @@ export default function ContentGenerationSection({
   selectedProductImageId,
   setSelectedProductImageId,
   onRegenerateImages,
+  isLoadingImages,
 }) {
   const isBannerSelected = selectedTypes.includes("배너 이미지 AI");
 
@@ -51,58 +52,50 @@ export default function ContentGenerationSection({
           광고에 사용할 제품 이미지를 선택하세요.
         </p>
 
-        <div className="grid grid-cols-3 gap-4">
-          {productImages.map((img) => {
-            const isSelected = selectedProductImageId === img.id;
-            return (
-              <div
-                key={img.id}
-                onClick={() => setSelectedProductImageId(img.id)}
-                className={`
-                  relative cursor-pointer rounded-xl border-2 transition-all overflow-hidden
-                  ${isSelected
-                    ? "border-blue-500 ring-2 ring-blue-100 ring-offset-2"
-                    : "border-gray-100 hover:border-gray-200"
-                  }
-                `}
-              >
-                <div className="aspect-square bg-gray-50 relative group">
-                  <img
-                    src={img.url}
-                    alt={img.label}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-
-                  {isSelected && (
-                    <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center transition-opacity">
-                      <div className="bg-blue-500 text-white rounded-full p-1.5 shadow-md transform scale-100 transition-transform">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                </div>
+        {productImages.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+            {isLoadingImages ? "제품 이미지 후보를 생성 중입니다..." : "제품 이미지 후보가 없습니다. 다시 생성해 주세요."}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {productImages.map((img) => {
+              const isSelected = selectedProductImageId === img.id;
+              return (
                 <div
-                  className={`p-3 text-center text-sm font-bold transition-colors ${isSelected ? "bg-blue-50 text-blue-600" : "bg-white text-gray-600"
-                    }`}
+                  key={img.id}
+                  onClick={() => setSelectedProductImageId(img.id)}
+                  className={`
+                    relative cursor-pointer rounded-xl border-2 transition-all overflow-hidden
+                    ${isSelected
+                      ? "border-blue-500 ring-2 ring-blue-100 ring-offset-2"
+                      : "border-gray-100 hover:border-gray-200"
+                    }
+                  `}
                 >
-                  {img.label}
+                  <div className="aspect-square bg-gray-50 relative group">
+                    <img
+                      src={img.url}
+                      alt={img.label}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center transition-opacity">
+                        <div className="bg-blue-500 text-white rounded-full p-1.5 shadow-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className={`p-3 text-center text-sm font-bold transition-colors ${isSelected ? "bg-blue-50 text-blue-600" : "bg-white text-gray-600"}`}>
+                    {img.label}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="mb-6">
@@ -123,7 +116,7 @@ export default function ContentGenerationSection({
                 setSelectedTypes((prev) =>
                   prev.includes(type.title)
                     ? prev.filter((t) => t !== type.title)
-                    : [...prev, type.title],
+                    : [...prev, type.title]
                 )
               }
               className={[
@@ -139,7 +132,6 @@ export default function ContentGenerationSection({
         })}
       </div>
 
-      {/* 배너 이미지 AI 선택 시 사이즈 입력 노출 */}
       {isBannerSelected && (
         <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
           <p className="mb-10 text-sm font-semibold text-gray-700">
@@ -163,11 +155,7 @@ export default function ContentGenerationSection({
                       : "border-gray-200 text-gray-500 hover:border-gray-500 hover:text-gray-500",
                   ].join(" ")}
                 >
-                  <div
-                    className="w-full rounded-md bg-gray-200"
-                    style={{ aspectRatio: `${w} / ${h}` }}
-                  />
-
+                  <div className="w-full rounded-md bg-gray-200" style={{ aspectRatio: `${w} / ${h}` }} />
                   <span className="absolute -top-6 left-0 w-full text-center text-xs font-semibold">
                     {ratioText}
                   </span>

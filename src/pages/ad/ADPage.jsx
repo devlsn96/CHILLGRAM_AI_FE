@@ -209,79 +209,30 @@ export default function ADPage() {
 
   // ✅ BASIC 프리뷰 생성
   const generateProductImages = useCallback(async () => {
-    if (!attachedFile)
-      throw new Error("첨부파일이 없습니다. 제품 이미지 후보 생성 불가.");
+  if (!attachedFile)
+    throw new Error("첨부파일이 없습니다. 제품 이미지 후보 생성 불가.");
 
-    const previewPayload = {
-      productId,
-      productName,
-      projectTitle,
-      adGoal,
-      requestText,
-      selectedKeywords,
-      adFocus,
-      n: 3,
-    };
+  // ★ 여기서 선택된 가이드/카피를 뽑는다
+  const selectedGuide = pickSelectedGuide(guideResponse, selectedGuideId);
+  const selectedCopy = pickSelectedCopy(copyResponse, selectedCopyId);
 
-    setPreviewError("");
-    setIsLoadingPreviewImages(true);
-    setProductImages([]);
-    setSelectedProductImageId("");
+  // ★ prompt/instruction을 “반드시 문자열”로 만든다
+  const prompt = (selectedGuide?.title ?? "").trim();
+  // instruction은 너 목적에 맞게 고르자:
+  // - 그냥 카피 본문: finalCopy
+  // - 배너용 지시문: bannerPrompt (있으면 이게 더 맞음)
+  const instruction = (
+    selectedCopy?.bannerPrompt ||
+    selectedCopy?.finalCopy ||
+    selectedCopy?.concept ||
+    ""
+  ).trim();
 
-    try {
-      // 1) 잡 생성
-      const { jobId } = await createBasicImageJob({
-        payload: previewPayload,
-        file: attachedFile,
-      });
-      setPreviewJobId(jobId);
+  if (!prompt && !instruction) {
+    throw new Error("가이드/카피 선택값이 비어있습니다. Step2~3 선택 확인 필요");
+  }
 
-      // ✅ 로컬 스토리지에 jobId 저장 (AD 프로젝트용) 목업
-      // ad_jobs_{productId} 키에 배열로 저장
-      const storageKey = `cg_ad_jobs_${productId}`;
-      const existingJobs = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      if (!existingJobs.includes(jobId)) {
-        localStorage.setItem(
-          storageKey,
-          JSON.stringify([...existingJobs, jobId]),
-        );
-      }
-
-      // 2) 완료 폴링
-      const job = await pollJobUntilDone(jobId, {
-        intervalMs: 1000,
-        timeoutMs: 60000,
-      });
-
-      if (job.status === "FAILED") {
-        throw new Error(job.errorMessage || "제품 이미지 후보 생성 실패");
-      }
-
-      // 3) 결과(manifest) 읽기
-      const result = await fetchBasicImageResult(jobId);
-      const candidates = result?.candidates ?? [];
-
-      if (!Array.isArray(candidates) || candidates.length === 0) {
-        throw new Error("제품 이미지 후보가 생성되지 않았습니다.");
-      }
-
-      const mapped = candidates.map((c, idx) => ({
-        id: String(c.id ?? `c${idx + 1}`),
-        url: c.url, // ✅ public URL
-        label: c.label ?? `image${idx + 1}`,
-        meta: c.meta ?? null,
-      }));
-
-      setProductImages(mapped);
-      setSelectedProductImageId(mapped[0]?.id ?? "");
-    } catch (e) {
-      setPreviewError(e?.message || "제품 이미지 후보 생성 실패");
-      throw e;
-    } finally {
-      setIsLoadingPreviewImages(false);
-    }
-  }, [
-    attachedFile,
+  const previewPayload = {
     productId,
     productName,
     projectTitle,
@@ -289,8 +240,75 @@ export default function ADPage() {
     requestText,
     selectedKeywords,
     adFocus,
-  ]);
+    n: 3,
 
+    // ✅ 이걸 넣어야 서버에서 통과함
+    prompt,
+    instruction,
+
+    // (선택) 디버깅/추적용으로 같이 보내도 됨
+    selectedGuideId,
+    selectedCopyId,
+  };
+
+  setPreviewError("");
+  setIsLoadingPreviewImages(true);
+  setProductImages([]);
+  setSelectedProductImageId("");
+
+  try {
+    const { jobId } = await createBasicImageJob({
+      payload: previewPayload,
+      file: attachedFile,
+    });
+    setPreviewJobId(jobId);
+
+    const job = await pollJobUntilDone(jobId, { intervalMs: 1000, timeoutMs: 60000 });
+    if (job.status === "FAILED") {
+      throw new Error(job.errorMessage || "제품 이미지 후보 생성 실패");
+    }
+    const result = await fetchBasicImageResult(jobId);
+    const candidates = Array.isArray(result?.candidates) ? result.candidates : [];
+    const fallbackUrl = result?.outputUri || result?.url || null;
+
+    const finalCandidates =
+      candidates.length > 0
+        ? candidates
+        : (fallbackUrl ? [{ id: "0", url: fallbackUrl, label: "preview", meta: null }] : []);
+
+    if (finalCandidates.length === 0) {
+      throw new Error("제품 이미지 후보가 생성되지 않았습니다.");
+    }
+
+    const mapped = finalCandidates.map((c, idx) => ({
+      id: String(c.id ?? `c${idx + 1}`),
+      url: c.url,
+      label: c.label ?? `image${idx + 1}`,
+      meta: c.meta ?? null,
+    }));
+
+    setProductImages(mapped);
+    setSelectedProductImageId(mapped[0]?.id ?? "");
+  } catch (e) {
+    setPreviewError(e?.message || "제품 이미지 후보 생성 실패");
+    throw e;
+  } finally {
+    setIsLoadingPreviewImages(false);
+  }
+}, [
+  attachedFile,
+  productId,
+  productName,
+  projectTitle,
+  adGoal,
+  requestText,
+  selectedKeywords,
+  adFocus,
+  guideResponse,
+  copyResponse,
+  selectedGuideId,
+  selectedCopyId,
+]);
   const handleRegenerateImages = useCallback(async () => {
     try {
       await generateProductImages();

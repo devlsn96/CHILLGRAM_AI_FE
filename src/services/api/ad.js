@@ -5,7 +5,7 @@ import { httpForm, httpJson } from "./http";
  */
 export async function fetchAdTrends({ productId, date }) {
   const body = date ? { date } : {};
-  return httpJson(`/api/products/${productId}/ad-trends`, {
+  return httpJson(`/api/advertising/${productId}/ad-trends`, {
     method: "POST",
     body,
   });
@@ -15,7 +15,7 @@ export async function fetchAdTrends({ productId, date }) {
  * 가이드 생성
  */
 export function fetchAdGuides(payload) {
-  return httpJson(`/api/products/${payload.productId}/ad-guides`, {
+  return httpJson(`/api/advertising/${payload.productId}/ad-guides`, {
     method: "POST",
     body: payload,
   });
@@ -25,7 +25,7 @@ export function fetchAdGuides(payload) {
  * 문구 생성
  */
 export function fetchAdCopies(payload) {
-  return httpJson(`/api/products/${payload.productId}/ad-copies`, {
+  return httpJson(`/api/advertising/${payload.productId}/ad-copies`, {
     method: "POST",
     body: payload,
   });
@@ -35,7 +35,7 @@ export function fetchAdCopies(payload) {
  * 최종 광고 생성
  */
 export async function createAdContents(formData) {
-  const res = await fetch(`/api/products/ads`, {
+  const res = await fetch(`/api/advertising/ads`, {
     method: "POST",
     body: formData,
   });
@@ -47,27 +47,46 @@ export async function createAdContents(formData) {
   return res.json();
 }
 
-/**
- * ✅ BASIC 잡 생성 (multipart)
- * POST /api/projects/basic-images
- * returns: { jobId }
- */
 export async function createBasicImageJob({ payload, file, baseFile }) {
-  const form = new FormData();
-  form.append("payload", JSON.stringify(payload));
-  form.append("file", file);
-  if (baseFile) {
-    form.append("base_file", baseFile);
-  }
+  const guideText =
+    typeof payload?.selectedGuide === "string"
+      ? payload.selectedGuide
+      : payload?.selectedGuide?.title ??
+        payload?.selectedGuide?.summary ??
+        "";
 
-  // NOTE: /api/jobs/basic-images 대신 /api/projects/{projectId}/basic-images 사용
-  // 그래야 projectId가 job_task 테이블에 제대로 들어가고 payload(conceptUrl 등)가 보존됨
-  return httpForm(`/api/projects/${payload.projectId}/basic-images`, {
+  const copyText =
+    typeof payload?.selectedCopy === "string"
+      ? payload.selectedCopy
+      : payload?.selectedCopy?.bannerPrompt ??
+        payload?.selectedCopy?.finalCopy ??
+        payload?.selectedCopy?.concept ??
+        "";
+
+  const prompt =
+    (payload?.prompt && String(payload.prompt).trim()) ||
+    String(guideText).trim();
+
+  const instruction =
+    (payload?.instruction && String(payload.instruction).trim()) ||
+    String(copyText).trim();
+
+  const normalizedPayload = {
+    ...payload,
+    prompt,
+    instruction,
+  };
+
+  const form = new FormData();
+  form.append("payload", JSON.stringify(normalizedPayload));
+  form.append("file", file);
+  if (baseFile) form.append("base_file", baseFile);
+
+  return httpForm(`/api/jobs/basic-images`, {
     method: "POST",
     formData: form,
   });
 }
-
 /**
  * ✅ 잡 조회
  * GET /api/jobs/{jobId}
@@ -83,9 +102,5 @@ export async function fetchJob(jobId) {
 export async function fetchBasicImageResult(jobId) {
   const job = await fetchJob(jobId);
   if (!job?.outputUri) throw new Error("outputUri가 없습니다.");
-
-  const res = await fetch(job.outputUri);
-  if (!res.ok)
-    throw new Error(await res.text().catch(() => "manifest fetch failed"));
-  return res.json();
+  return { url: job.outputUri };
 }

@@ -21,7 +21,6 @@ import Card from "@/components/common/Card";
 export default function ProductAdStatusPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("전체");
   const bootstrapped = useAuthStore((s) => s.bootstrapped);
 
   // 제품 상세 조회
@@ -41,6 +40,9 @@ export default function ProductAdStatusPage() {
     queryFn: () => fetchProjectsByProduct(productId),
     enabled: !!productId && bootstrapped,
   });
+
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const currentHeader = {
     name: product?.name || "제품",
@@ -69,12 +71,14 @@ export default function ProductAdStatusPage() {
     contentCount: p.contentCount || p.content_count || 0,
   }));
 
-  const filteredProjects = projects.filter((p) => {
-    if (activeTab === "전체") return true;
-    if (activeTab === "광고") return p.type === "ad";
-    if (activeTab === "도안") return p.type === "design";
-    return true;
-  });
+  const filteredProjectsBase = projects;
+
+  // 페이지네이션 적용
+  const totalPages = Math.ceil(filteredProjectsBase.length / pageSize) || 1;
+  const filteredProjects = filteredProjectsBase.slice(
+    page * pageSize,
+    (page + 1) * pageSize,
+  );
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] py-12">
@@ -122,36 +126,14 @@ export default function ProductAdStatusPage() {
           </div>
         </div>
 
-        {/* 탭 메뉴 */}
-        <div className="flex gap-2 mb-8">
-          {["전체", "광고", "도안"].map((tab) => (
-            <Button
-              key={tab}
-              variant="primary"
-              size="sm"
-              onClick={() => setActiveTab(tab)}
-              className={`rounded-xl transition-all border ${
-                activeTab === tab
-                  ? "bg-[#60A5FA] border-[#60A5FA] shadow-md"
-                  : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-              }`}
-            >
-              {tab}
-            </Button>
-          ))}
-        </div>
-
         {/* 프로젝트 목록 테이블 */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-8">
           <ErrorBoundary>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="py-5 font-bold text-gray-400 text-xs px-4 w-[12%] whitespace-nowrap">
-                      구분
-                    </th>
-                    <th className="py-5 font-bold text-gray-400 text-xs px-4 w-[43%]">
+                    <th className="py-5 font-bold text-gray-400 text-xs px-4 w-[55%]">
                       프로젝트명
                     </th>
                     <th className="py-5 font-bold text-gray-400 text-xs px-4 w-[12%] whitespace-nowrap">
@@ -169,7 +151,7 @@ export default function ProductAdStatusPage() {
                   {isProjectsLoading && (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="4"
                         className="py-20 text-center text-gray-400 text-sm"
                       >
                         로딩 중...
@@ -179,25 +161,13 @@ export default function ProductAdStatusPage() {
                   {isProjectsError && (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="4"
                         className="py-20 text-center text-red-400 text-sm"
                       >
                         프로젝트 목록을 불러오지 못했습니다.
                       </td>
                     </tr>
                   )}
-                  {!isProjectsLoading &&
-                    !isProjectsError &&
-                    filteredProjects.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan="5"
-                          className="py-20 text-center text-gray-400 text-sm"
-                        >
-                          아직 생성된 프로젝트가 없습니다.
-                        </td>
-                      </tr>
-                    )}
                   {!isProjectsLoading &&
                     !isProjectsError &&
                     filteredProjects.map((project) => (
@@ -212,19 +182,8 @@ export default function ProductAdStatusPage() {
                             state: { projectName: project.title },
                           });
                         }}
-                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer group"
+                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer group h-[81px]"
                       >
-                        <td className="py-6 px-4 whitespace-nowrap">
-                          <span
-                            className={`inline-block px-3 py-1.5 rounded-lg text-[10px] font-black ${
-                              project.type === "ad"
-                                ? "bg-purple-50 text-purple-600"
-                                : "bg-blue-50 text-blue-600"
-                            }`}
-                          >
-                            {project.badge}
-                          </span>
-                        </td>
                         <td className="py-6 px-4">
                           <div className="text-base font-bold text-[#111827] group-hover:text-blue-500 transition-colors">
                             {project.title}
@@ -243,17 +202,59 @@ export default function ProductAdStatusPage() {
                         </td>
                         <td className="py-6 px-4 whitespace-nowrap">
                           <div className="flex justify-center">
-                            <button className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-black hover:bg-blue-100 transition-all active:scale-95">
+                            <div className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-black hover:bg-blue-100 transition-all active:scale-95">
                               <Eye size={14} />
                               상세보기
-                            </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
                     ))}
+                  {/* 빈 행 채우기 */}
+                  {!isProjectsLoading && !isProjectsError &&
+                    Array.from({ length: Math.max(0, pageSize - filteredProjects.length) }).map((_, i) => (
+                      <tr key={`empty-${i}`} className="border-b border-gray-50 h-[81px]">
+                        <td colSpan="4" className="py-6 px-4 text-center text-gray-300 text-xs">
+                          {filteredProjectsBase.length === 0 && i === 4 ? "아직 생성된 프로젝트가 없습니다." : ""}
+                        </td>
+                      </tr>
+                    ))
+                  }
                 </tbody>
               </table>
             </div>
+
+            {/* 페이지네이션 UI */}
+            {!isProjectsLoading && !isProjectsError && filteredProjectsBase.length > 0 && (
+              <div className="mt-8 flex justify-center gap-2">
+                <button
+                  className="h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 disabled:opacity-50 hover:bg-gray-50 flex items-center justify-center transition-colors"
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                >
+                  &lt;
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    className={`h-8 w-8 rounded-lg text-sm font-bold transition-all ${i === page
+                      ? "bg-[#60A5FA] text-white shadow-sm"
+                      : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    onClick={() => setPage(i)}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  className="h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 disabled:opacity-50 hover:bg-gray-50 flex items-center justify-center transition-colors"
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={page === totalPages - 1}
+                >
+                  &gt;
+                </button>
+              </div>
+            )}
           </ErrorBoundary>
         </div>
       </Container>

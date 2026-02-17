@@ -206,20 +206,20 @@ export default function ProductManagementPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {stats.map((stat, idx) => (
             <ErrorBoundary key={idx}>
-              <Card className="flex h-32 flex-col justify-between border-gray-200 shadow-sm bg-white p-6">
-                <div className="flex items-start justify-between">
-                  <span className="text-sm font-medium text-gray-500">
+              <Card className="flex h-32 flex-row items-center justify-between border-gray-200 shadow-md bg-white p-6 hover:shadow-lg transition-shadow">
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-gray-500 mb-1">
                     {stat.title}
                   </span>
-                  <stat.icon
-                    size={20}
-                    className="text-blue-400"
-                    strokeWidth={2}
-                  />
+                  <div className="text-4xl font-black text-[#111827] tabular-nums">
+                    {stat.value}
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-[#111827] tabular-nums">
-                  {stat.value}
-                </div>
+                <stat.icon
+                  size={35}
+                  className="text-blue-400 shrink-0"
+                  strokeWidth={2}
+                />
               </Card>
             </ErrorBoundary>
           ))}
@@ -314,7 +314,7 @@ export default function ProductManagementPage() {
                       return (
                         <tr
                           key={productId}
-                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
+                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer h-[73px]"
                           onClick={() => {
                             setProduct(productId, product.name);
                             navigate(`/dashboard/products/${productId}`);
@@ -390,18 +390,17 @@ export default function ProductManagementPage() {
                         </tr>
                       );
                     })}
-                  {!isLoading &&
-                    !isError &&
-                    filteredProductsBase.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan="7"
-                          className="py-20 text-center text-gray-400 text-sm"
-                        >
-                          검색 결과가 없습니다
+                  {/* 빈 행 채우기 (항상 10개 행 높이 유지) */}
+                  {!isLoading && !isError &&
+                    Array.from({ length: Math.max(0, pageSize - filteredProducts.length) }).map((_, i) => (
+                      <tr key={`empty-${i}`} className="border-b border-gray-50 h-[73px]">
+                        <td colSpan="7" className="py-4 px-4 text-center text-gray-300 text-sm">
+                          {/* 데이터가 아예 없을 때 첫 번째 빈 행에 메시지 표시 */}
+                          {filteredProducts.length === 0 && i === 4 ? "검색 결과가 없습니다" : ""}
                         </td>
                       </tr>
-                    )}
+                    ))
+                  }
                 </tbody>
               </table>
             </div>
@@ -418,11 +417,10 @@ export default function ProductManagementPage() {
                 {Array.from({ length: totalPages }, (_, i) => (
                   <button
                     key={i}
-                    className={`h-8 w-8 rounded-lg text-sm font-bold transition-all ${
-                      i === page
-                        ? "bg-[#60A5FA] text-white shadow-sm"
-                        : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                    }`}
+                    className={`h-8 w-8 rounded-lg text-sm font-bold transition-all ${i === page
+                      ? "bg-[#60A5FA] text-white shadow-sm"
+                      : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
                     onClick={() => setPage(i)}
                   >
                     {i + 1}

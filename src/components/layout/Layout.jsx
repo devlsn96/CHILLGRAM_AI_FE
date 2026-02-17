@@ -11,7 +11,7 @@ export function Layout({ children, isLoggedIn, setIsLoggedIn }) {
 
   return (
     // 선우님과 충돌 해결을 위해 min-h-dvh로 수정 했습니다
-    <div className="min-h-dvh flex flex-col bg-white w-full">
+    <div className="min-h-dvh flex flex-col bg-gray-100 w-full">
       {!isAuthOnlyPage && (
         <ErrorBoundary>
           {isAdCreatePage ? (

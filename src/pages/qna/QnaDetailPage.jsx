@@ -284,9 +284,9 @@ export default function QnaDetailPage() {
 
             {question && (
               <>
-                <Card className="border-gray-100">
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="rounded-full border border-gray-200 px-2 py-0.5 text-gray-600">
+                <div className="rounded-3xl border border-gray-200 bg-white p-8 md:p-10 shadow-sm transition-shadow hover:shadow-md">
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <span className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 font-medium text-gray-600">
                       {(() => {
                         const catId =
                           question.category ||
@@ -300,9 +300,9 @@ export default function QnaDetailPage() {
                       })()}
                     </span>
                     <span
-                      className={`rounded-full px-2 py-0.5 font-semibold ${STATUS_TONE[
+                      className={`rounded-lg px-3 py-1 font-bold ${STATUS_TONE[
                         STATUS_MAP[question.status] || question.status
-                      ] || "bg-gray-100 text-gray-700"
+                        ] || "bg-gray-100 text-gray-700"
                         }`}
                     >
                       {STATUS_MAP[question.status] ||
@@ -310,22 +310,23 @@ export default function QnaDetailPage() {
                         "답변 대기"}
                     </span>
                   </div>
-                  <h1 className="mt-4 text-xl font-semibold text-gray-900">
+                  <h1 className="mt-6 text-3xl font-bold leading-tight text-gray-900 md:text-4xl">
                     {question.title}
                   </h1>
-                  <div className="mt-3 flex flex-wrap items-center gap-5 text-xs text-gray-400">
-                    <span className="flex items-center gap-1.5">
-                      <User size={14} className="text-gray-300" />
+                  <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-gray-500">
+                    <span className="flex items-center gap-2">
+                      <User size={16} className="text-gray-400" />
                       {maskName(question.createdByName || question.author)}
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <Calendar size={14} className="text-gray-300" />
+                    <span className="h-4 w-px bg-gray-200"></span>
+                    <span className="flex items-center gap-2">
+                      <Calendar size={16} className="text-gray-400" />
                       {question.date ||
                         question.created_at?.substring(0, 10) ||
                         question.createdAt?.substring(0, 10)}
                     </span>
                   </div>
-                  <div className="mt-4 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                  <div className="mt-8 rounded-2xl bg-gray-50/80 p-6 text-base leading-relaxed text-gray-700 md:p-8">
                     {question.content || question.body}
                   </div>
 
@@ -333,7 +334,7 @@ export default function QnaDetailPage() {
                   {(question.imageUrl ||
                     question.fileUrl ||
                     question.gcsImageUrl) && (
-                      <div className="mt-4">
+                      <div className="mt-8">
                         <AuthImage
                           src={
                             question.imageUrl ||
@@ -341,19 +342,19 @@ export default function QnaDetailPage() {
                             question.gcsImageUrl
                           }
                           alt="첨부 이미지"
-                          className="max-h-96 max-w-full rounded-lg object-contain border border-gray-200"
+                          className="max-h-96 max-w-full rounded-2xl border border-gray-200 object-contain shadow-sm"
                         />
                       </div>
                     )}
 
                   {question.attachments && question.attachments.length > 0 && (
-                    <div className="mt-4 space-y-4">
+                    <div className="mt-8 space-y-6">
                       {question.attachments.map((att, index) => (
                         <div key={index}>
                           <AuthImage
                             src={att.fileUrl || att.url}
                             alt={`첨부 이미지 ${index + 1}`}
-                            className="max-h-96 max-w-full rounded-lg object-contain border border-gray-200"
+                            className="max-h-96 max-w-full rounded-2xl border border-gray-200 object-contain shadow-sm"
                           />
                         </div>
                       ))}
@@ -362,16 +363,16 @@ export default function QnaDetailPage() {
 
                   {/* 수정/삭제 버튼 - 작성자만 표시 */}
                   {isAuthor && (
-                    <div className="mt-4 flex justify-end gap-2">
+                    <div className="mt-8 flex justify-end gap-3 border-t border-gray-100 pt-6">
                       <Button
                         variant="secondary"
-                        className="h-8 border border-gray-300 bg-white px-4 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        className="h-9 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300"
                         onClick={() => navigate(`/qna/${questionId}/edit`)}
                       >
                         수정
                       </Button>
                       <Button
-                        className="h-8 bg-red-500 px-4 text-xs font-medium text-white hover:bg-red-600"
+                        className="h-9 px-4 text-sm font-medium text-white bg-red-500 hover:bg-red-600"
                         onClick={handleDelete}
                         disabled={isSubmitting}
                       >
@@ -379,7 +380,7 @@ export default function QnaDetailPage() {
                       </Button>
                     </div>
                   )}
-                </Card>
+                </div>
 
                 <div className="flex items-center gap-2 text-base font-bold text-gray-900 mt-8 mb-4">
                   <MessageSquare size={18} className="text-gray-900" />
@@ -391,13 +392,13 @@ export default function QnaDetailPage() {
                     {validAnswers.map((answer) => {
                       const answerId = answer.answerId || answer.id;
                       return (
-                        <Card
+                        <div
                           key={answerId}
-                          className="border-none border-l-[3px] border-l-blue-500 bg-[#F6F9FF] shadow-none p-5"
+                          className="rounded-2xl border border-blue-100 bg-[#F6F9FF] p-6 shadow-sm md:p-8 transition-shadow hover:shadow-md"
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-gray-800">
+                          <div className="flex items-center justify-between pb-4 border-b border-blue-100/50">
+                            <div className="flex items-center gap-3">
+                              <span className="text-base font-bold text-gray-900">
                                 {maskName(
                                   answer.answeredByName ||
                                   answer.author ||
@@ -406,14 +407,14 @@ export default function QnaDetailPage() {
                               </span>
                               {answer.role && (
                                 <span
-                                  className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${ROLE_TONE[answer.role] ||
+                                  className={`rounded-md px-2 py-0.5 text-xs font-bold ${ROLE_TONE[answer.role] ||
                                     "bg-gray-400 text-white"
                                     }`}
                                 >
                                   {answer.role}
                                 </span>
                               )}
-                              <span className="text-[11px] font-medium text-gray-400 ml-1">
+                              <span className="text-xs font-medium text-gray-400">
                                 {answer.date ||
                                   answer.createdAt?.substring(0, 10) ||
                                   answer.created_at?.substring(0, 10)}
@@ -422,16 +423,16 @@ export default function QnaDetailPage() {
 
                             {isAnswerAuthor(answer) &&
                               editingAnswerId !== answerId && (
-                                <div className="flex gap-2">
+                                <div className="flex gap-3">
                                   <button
                                     onClick={() => startEditAnswer(answer)}
-                                    className="text-[11px] font-medium text-gray-300 hover:text-blue-500 transition-colors"
+                                    className="text-xs font-medium text-gray-400 hover:text-blue-600 transition-colors"
                                   >
                                     수정
                                   </button>
                                   <button
                                     onClick={() => handleDeleteAnswer(answerId)}
-                                    className="text-[11px] font-medium text-gray-300 hover:text-red-500 transition-colors"
+                                    className="text-xs font-medium text-gray-400 hover:text-red-600 transition-colors"
                                   >
                                     삭제
                                   </button>
@@ -440,23 +441,23 @@ export default function QnaDetailPage() {
                           </div>
 
                           {editingAnswerId === answerId ? (
-                            <div className="mt-3">
+                            <div className="mt-4">
                               <textarea
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
-                                className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-primary focus:outline-none"
-                                rows={3}
+                                className="w-full rounded-xl border border-gray-300 p-4 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
+                                rows={4}
                               />
-                              <div className="mt-2 flex justify-end gap-2">
+                              <div className="mt-3 flex justify-end gap-2">
                                 <Button
                                   variant="secondary"
-                                  className="h-7 px-3 text-xs bg-white border border-gray-200"
+                                  className="h-8 px-4 text-xs font-medium bg-white border border-gray-300 hover:bg-gray-50"
                                   onClick={cancelEditAnswer}
                                 >
                                   취소
                                 </Button>
                                 <Button
-                                  className="h-7 bg-blue-500 px-3 text-xs text-white hover:bg-blue-600"
+                                  className="h-8 bg-blue-600 px-4 text-xs font-medium text-white hover:bg-blue-700"
                                   onClick={() => saveEditAnswer(answerId)}
                                 >
                                   저장
@@ -464,11 +465,11 @@ export default function QnaDetailPage() {
                               </div>
                             </div>
                           ) : (
-                            <div className="mt-2.5 text-sm text-[#475467] leading-relaxed whitespace-pre-wrap">
+                            <div className="mt-4 text-base leading-relaxed text-gray-700 whitespace-pre-wrap">
                               {answer.content || answer.body}
                             </div>
                           )}
-                        </Card>
+                        </div>
                       );
                     })}
                   </ErrorBoundary>
@@ -480,7 +481,7 @@ export default function QnaDetailPage() {
                   )}
                 </div>
 
-                <Card className="border-gray-100 mt-10">
+                <div className="mt-12 rounded-3xl border border-gray-200 bg-white p-8 md:p-10 shadow-sm">
                   <h2 className="text-sm font-bold text-gray-800">답변 작성</h2>
                   <textarea
                     rows={4}
@@ -490,13 +491,13 @@ export default function QnaDetailPage() {
                     onChange={(e) => setAnswerContent(e.target.value)}
                   />
                   <Button
-                    className="mt-4 h-12 w-full rounded-xl bg-primary text-[15px] font-black text-white hover:bg-primary/90 transition-all disabled:opacity-50 shadow-sm"
+                    className="mt-6 h-12 w-full rounded-xl bg-primary text-[15px] font-bold text-white hover:bg-primary/90 transition-all disabled:opacity-50 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm"
                     onClick={handleSubmitAnswer}
                     disabled={isSubmitting || !answerContent.trim()}
                   >
                     {isSubmitting ? "등록 중..." : "답변 등록"}
                   </Button>
-                </Card>
+                </div>
               </>
             )}
           </div>

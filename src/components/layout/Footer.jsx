@@ -4,7 +4,7 @@ import Container from "../common/Container";
 
 export default function Footer() {
   return (
-    <footer className="bg-black text-white py-8 mt-20 border-t border-gray-800">
+    <footer className="bg-black text-white py-8 border-t border-gray-800">
       <Container>
         {/* Top: Links */}
         <div className="flex flex-col md:flex-row justify-between items-center border-b border-gray-800 pb-6 mb-6 text-sm text-gray-400">

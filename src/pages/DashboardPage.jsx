@@ -23,7 +23,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-full bg-[#F9FAFB] py-8">
+    <div className="min-h-full py-8">
       <Container>
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -58,7 +58,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <ErrorBoundary>
-              <Card className="h-full border-gray-200 shadow-sm bg-white">
+              <Card className="h-full border border-gray-200 shadow-md bg-white hover:shadow-lg transition-shadow duration-300">
                 <h2 className="text-xl font-bold text-gray-800 mb-1">
                   최근 활동
                 </h2>
@@ -89,7 +89,7 @@ export default function DashboardPage() {
 
           <div>
             <ErrorBoundary>
-              <Card className="h-full border-gray-200 shadow-sm bg-white">
+              <Card className="h-full border border-gray-200 shadow-md bg-white hover:shadow-lg transition-shadow duration-300">
                 <h2 className="text-xl font-bold text-gray-800 mb-1">
                   바로 시작하기
                 </h2>
@@ -124,14 +124,14 @@ export default function DashboardPage() {
 
 function StatItem({ title, value, icon: Icon, color }) {
   return (
-    <Card className="flex h-32 flex-col justify-between border-gray-200 shadow-sm">
-      <div className="flex items-start justify-between">
+    <Card className="flex h-32 flex-row items-center justify-between px-8 border border-gray-200 shadow-md bg-white hover:border-gray-300 hover:shadow-lg transition-all duration-300 group">
+      <div className="flex flex-col gap-2">
         <span className="text-sm font-bold tracking-tight text-gray-400">
           {title}
         </span>
-        {Icon && <Icon size={22} className={color} strokeWidth={2.5} />}
+        <div className="text-3xl font-black text-gray-900">{value}</div>
       </div>
-      <div className="text-3xl font-black text-gray-900">{value}</div>
+      {Icon && <Icon size={40} className={color} strokeWidth={2.5} />}
     </Card>
   );
 }
@@ -140,7 +140,7 @@ function QuickButton({ icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-700 flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm"
+      className="w-full py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-700 flex items-center justify-center gap-3 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all shadow-sm"
     >
       {Icon && <Icon size={20} className="text-gray-400" />}
       {label}

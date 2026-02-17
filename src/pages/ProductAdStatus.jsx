@@ -51,7 +51,15 @@ export default function ProductAdStatusPage() {
   const rawProjects = Array.isArray(projectsData)
     ? projectsData
     : projectsData?.projects || projectsData?.content || [];
-  const projects = rawProjects.map((p) => ({
+
+  // Sort by createdAt descending (newest first)
+  const sortedProjects = [...rawProjects].sort((a, b) => {
+    const dateA = new Date(a.createdAt || a.created_at || 0);
+    const dateB = new Date(b.createdAt || b.created_at || 0);
+    return dateB - dateA;
+  });
+
+  const projects = sortedProjects.map((p) => ({
     id: p.projectId || p.project_id || p.id,
     type: p.type === "AD" || p.projectType === "AD" ? "ad" : "design",
     badge:

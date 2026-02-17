@@ -147,7 +147,7 @@ export default function DesignPage() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 text-gray-500 text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm"
         >
-          <ArrowLeft size={20} /> 프로잭트 목록
+          <ArrowLeft size={20} /> 프로젝트 목록
         </button>
       </div>
       {/* 헤더 섹션 */}

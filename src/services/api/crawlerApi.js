@@ -11,7 +11,10 @@ export async function registerProduct(payload) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      force: payload.force || false,
+    }),
   });
   if (!res.ok) throw new Error("제품 등록 및 크롤링 시작 실패");
   return res.json();
@@ -38,18 +41,18 @@ export async function analyzeProduct(productId) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/pdf",
     },
     body: JSON.stringify({ product_id: productId }),
   });
 
   if (!res.ok) throw new Error("분석 리포트 생성 실패");
 
-  // Content-Type 확인 -> PDF면 blob, 아니면 json
+  // Content-Type 확인 -> PDF면 blob, 아니면 json (에러 메시지 등)
   const contentType = res.headers.get("Content-Type");
   if (contentType && contentType.includes("application/pdf")) {
     return res.blob();
   }
-  console.warn("Expected PDF but got:", contentType);
   return res.json();
 }
 
@@ -67,5 +70,39 @@ export async function crawlProduct(payload) {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("크롤링 실패");
+  return res.json();
+}
+
+/**
+ * 분석 재시작 (기존 작업 무시)
+ * POST /reanalyze
+ * Payload: { product_id: string }
+ */
+export async function reanalyzeProduct(productId) {
+  const res = await apiFetch("/reanalyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ product_id: productId }),
+  });
+  if (!res.ok) throw new Error("분석 재시작 실패");
+  return res.json();
+}
+
+/**
+ * PDF 재생성
+ * POST /regenerate-pdf
+ * Payload: { product_id: string }
+ */
+export async function regeneratePdf(productId) {
+  const res = await apiFetch("/regenerate-pdf", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ product_id: productId }),
+  });
+  if (!res.ok) throw new Error("PDF 재생성 실패");
   return res.json();
 }

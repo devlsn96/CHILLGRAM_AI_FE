@@ -12,9 +12,8 @@ import {
   MousePointer2,
   Users,
   X,
+  Sparkles,
 } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import {
   LineChart,
   Line,
@@ -38,7 +37,13 @@ import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { fetchProducts } from "@/services/api/productApi";
 import { useAuthStore } from "@/stores/authStore";
 import { apiFetch } from "@/lib/apiFetch";
-import { analyzeProduct } from "@/services/api/crawlerApi";
+import {
+  analyzeProduct,
+  registerProduct,
+  getProductStatus,
+  reanalyzeProduct,
+} from "@/services/api/crawlerApi";
+import PdfViewer from "@/components/common/PdfViewer";
 
 // --- 로컬 실행을 위한 완결된 더미 데이터 ---
 const lineData = [
@@ -60,8 +65,6 @@ const barData = [
   { name: "6월", 매출: 7800, 광고비: 3200 },
 ];
 
-// ... (imports)
-
 export default function AnalyticsReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const reportRef = useRef(null);
@@ -71,7 +74,16 @@ export default function AnalyticsReportPage() {
   const [selectedProductId, setSelectedProductId] = useState(
     searchParams.get("productId") || "",
   );
-  const [isPdfOpen, setIsPdfOpen] = useState(false); // PDF 팝업 상태
+
+  // PDF 관련 상태
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState("");
+  const [isStartingAnalysis, setIsStartingAnalysis] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState("idle"); // idle, requesting, processing, completed, failed
+  const [lastCheckTime, setLastCheckTime] = useState(null);
+  const [statusMessage, setStatusMessage] = useState("");
+
   const bootstrapped = useAuthStore((s) => s.bootstrapped);
 
   // URL 파라미터에서 탭 설정
@@ -81,10 +93,74 @@ export default function AnalyticsReportPage() {
     if (tab) setActiveTab(tab);
     if (productId) {
       setSelectedProductId(productId);
-      // 제품 ID가 URL에 있으면 팝업 띄우기 (약간의 지연 후)
-      setTimeout(() => setIsPdfOpen(true), 500);
     }
   }, [searchParams]);
+
+  // 제품 변경 시 PDF 가져오기
+  useEffect(() => {
+    if (selectedProductId) {
+      fetchPdfPreview(selectedProductId);
+    } else {
+      setPdfUrl("");
+      setPdfError("");
+    }
+
+    // Cleanup function to revoke object URL
+    return () => {
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [selectedProductId]);
+
+  // 폴링 및 자동 로드 로직
+  useEffect(() => {
+    let intervalId = null;
+
+    if (analysisStatus === "processing" && selectedProductId) {
+      intervalId = setInterval(async () => {
+        try {
+          console.log(`[Polling] Checking status for: ${selectedProductId}`);
+          const statusRes = await getProductStatus(selectedProductId);
+          console.log("[Polling] Response:", statusRes);
+          setLastCheckTime(new Date());
+
+          // 서버 응답의 status 필드 확인 (finished 또는 completed)
+          const currentStatus = statusRes.status?.toLowerCase() || "";
+          const msg = statusRes.message || statusRes.detail || "";
+
+          if (msg) setStatusMessage(msg);
+          else if (currentStatus)
+            setStatusMessage(`현재 단계: ${currentStatus}`);
+
+          if (
+            currentStatus === "finished" ||
+            currentStatus === "completed" ||
+            currentStatus === "success" ||
+            currentStatus === "done"
+          ) {
+            setAnalysisStatus("completed");
+            // PDF 준비를 위해 아주 약간의 지연 후 호출하거나, fetchPdfPreview 내부에서 재시도하도록 유도
+            setTimeout(() => {
+              fetchPdfPreview(selectedProductId);
+            }, 1500);
+            clearInterval(intervalId);
+          } else if (currentStatus === "failed" || currentStatus === "error") {
+            setAnalysisStatus("failed");
+            setPdfError(msg || "분석 중 오류가 발생했습니다.");
+            clearInterval(intervalId);
+          }
+        } catch (error) {
+          console.error("Polling status failed:", error);
+          // 네트워크 에러 등은 일시적일 수 있으므로 계속 진행하거나 횟수 제한을 둘 수 있음
+        }
+      }, 5000); // 5초마다 확인
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [analysisStatus, selectedProductId]);
 
   // 제품 목록 조회 (리뷰 분석용)
   const { data: productsData } = useQuery({
@@ -125,21 +201,103 @@ export default function AnalyticsReportPage() {
     },
   ];
 
+  // PDF 미리보기 가져오기
+  const fetchPdfPreview = async (productId) => {
+    if (!productId) return;
+
+    setIsLoadingPdf(true);
+    setPdfError("");
+
+    // 기존 URL 정리
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+      setPdfUrl("");
+    }
+
+    try {
+      const response = await analyzeProduct(productId);
+
+      if (!(response instanceof Blob)) {
+        const msg =
+          response?.detail || response?.message || JSON.stringify(response);
+        throw new Error(msg);
+      }
+
+      const url = window.URL.createObjectURL(response);
+      setPdfUrl(url);
+      setAnalysisStatus("completed");
+    } catch (error) {
+      console.error("PDF preview failed:", error);
+      const rawMsg = error.message || "";
+      let displayMsg = "리포트를 불러오는데 실패했습니다.";
+
+      if (
+        rawMsg.includes("찾을 수 없습니다") ||
+        rawMsg.includes("not found") ||
+        rawMsg.includes("처리 중") ||
+        rawMsg.includes("analyzing") ||
+        rawMsg.includes("processing")
+      ) {
+        // 리포트가 없는 경우나 처리 중인 경우, 분석 상태를 확인하여 지속성 유지
+        try {
+          console.log(
+            `[Persistence] Status signal detected in error, checking: ${productId}`,
+          );
+          const statusRes = await getProductStatus(productId);
+          if (
+            statusRes.status === "processing" ||
+            statusRes.status === "running" ||
+            statusRes.status === "analyzing"
+          ) {
+            console.log(
+              "[Persistence] Analysis found in progress, resuming polling.",
+            );
+            setAnalysisStatus("processing");
+            setPdfError("");
+            setLastCheckTime(new Date());
+            return;
+          }
+        } catch (statusError) {
+          console.error("Checking status for persistence failed:", statusError);
+        }
+
+        displayMsg = "분석 리포트가 아직 생성되지 않았습니다.";
+      } else if (rawMsg) {
+        displayMsg = rawMsg;
+      }
+
+      setPdfError(displayMsg);
+      setAnalysisStatus("failed");
+    } finally {
+      setIsLoadingPdf(false);
+    }
+  };
+
   const handleDownloadPDF = async () => {
     if (!selectedProductId) return;
+
+    // 이미 불러온 PDF가 있으면 바로 다운로드
+    if (pdfUrl) {
+      const a = document.createElement("a");
+      a.href = pdfUrl;
+      a.download = `Analytics_Report_${selectedProductId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
+
     try {
-      // 백엔드 API를 통해 PDF 생성 및 다운로드
+      // 백엔드 API를 통해 PDF 생성 및 다운로드 (fallback)
       const response = await analyzeProduct(selectedProductId);
 
       if (!(response instanceof Blob)) {
         console.error("PDF download failed, response is not a blob:", response);
-        // 에러 응답인 경우 메시지 표시
         const msg =
           response?.detail || response?.message || JSON.stringify(response);
-        throw new Error("PDF 형식이 아닙니다: " + msg);
+        throw new Error(msg);
       }
 
-      // Blob을 URL로 변환하여 다운로드 트리거
       const url = window.URL.createObjectURL(response);
       const a = document.createElement("a");
       a.href = url;
@@ -185,13 +343,81 @@ export default function AnalyticsReportPage() {
     }
   };
 
+  // 분석 시작 요청 핸들러
+  const handleStartAnalysis = async (isForce = false) => {
+    const product = products.find((p) => {
+      const urlIdMatch = p.reviewUrl?.match(/\/products\/(\d+)/);
+      const extractedId = urlIdMatch
+        ? urlIdMatch[1]
+        : p.productId || p.product_id || p.id;
+      return String(extractedId) === String(selectedProductId);
+    });
+
+    if (!product || !product.reviewUrl) {
+      alert("제품의 리뷰 URL을 찾을 수 없습니다.");
+      return;
+    }
+
+    setIsStartingAnalysis(true);
+    setAnalysisStatus("requesting");
+    console.log(
+      `[Analysis] Starting for product ID: ${selectedProductId}, URL: ${product.reviewUrl}`,
+    );
+
+    try {
+      let res;
+      if (isForce) {
+        console.log("[Analysis] Force re-requesting using reanalyzeProduct...");
+        res = await reanalyzeProduct(selectedProductId);
+      } else {
+        res = await registerProduct({
+          coupang_url: product.reviewUrl,
+          max_reviews: 100,
+        });
+      }
+      console.log("[Analysis] Request successful:", res);
+      setAnalysisStatus("processing");
+      setStatusMessage(res.message || res.status || "분석을 시작합니다.");
+      setLastCheckTime(new Date());
+      setPdfError(""); // 기존 에러 메시지 제거
+    } catch (error) {
+      console.error("Start analysis failed:", error);
+
+      // 이미 진행 중인 경우(already_exists) 에러로 처리하지 않고 진행 상태로 진입
+      // 단, 사용자가 명시적으로 '강제 재요청'한 경우에는 이를 무시하고 계속 시도하는 것이 서버 설정에 따라 다를 수 있음
+      if (
+        !isForce &&
+        (error.message?.includes("already_exists") ||
+          error.message?.includes("이미"))
+      ) {
+        console.log("[Analysis] Already in progress, switching to polling.");
+        setAnalysisStatus("processing");
+        setLastCheckTime(new Date());
+        setPdfError("");
+        return;
+      }
+
+      setAnalysisStatus("failed");
+      alert(`분석 시작 실패: ${error.message}`);
+    } finally {
+      setIsStartingAnalysis(false);
+    }
+  };
+
+  // 분석 취소 핸들러
+  const handleCancelAnalysis = () => {
+    setAnalysisStatus("failed"); // failed나 idle로 설정하여 버튼이 보이게 함
+    setPdfError("분석 리포트가 아직 생성되지 않았습니다.");
+    setStatusMessage("");
+    if (isStartingAnalysis) setIsStartingAnalysis(false);
+    console.log("[Analysis] Cancelled by user and reverted to request state");
+  };
+
   // 제품 선택 핸들러
   const handleProductSelect = (e) => {
     const pid = e.target.value;
     setSelectedProductId(pid);
-    if (pid) {
-      setIsPdfOpen(true); // 제품 선택 시 팝업 오픈
-    }
+    // useEffect에서 fetchPdfPreview 호출됨
   };
 
   return (
@@ -416,155 +642,135 @@ export default function AnalyticsReportPage() {
                   {/* PDF 다운로드 버튼 */}
                   <Button
                     onClick={handleDownloadPDF}
-                    className="px-6 py-2 rounded-xl font-black flex gap-2 items-center transition-all shadow-sm bg-[#FFBB28] text-white hover:brightness-95"
+                    disabled={!selectedProductId}
+                    className="px-6 py-2 rounded-xl font-black flex gap-2 items-center transition-all shadow-sm bg-[#FFBB28] text-white hover:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <FileText size={18} /> PDF 다운로드
                   </Button>
                 </div>
               </Card>
 
-              {/* 더미 PDF 팝업 */}
-              {isPdfOpen && selectedProductId && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-                  <div className="bg-white rounded-2xl w-full max-w-4xl h-[85vh] relative shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
-                    <div className="flex justify-between items-center p-4 border-b border-gray-100">
-                      <h3 className="text-lg font-bold text-gray-900">
-                        PDF 리포트 (미리보기)
-                      </h3>
-                      <button
-                        onClick={() => setIsPdfOpen(false)}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-                      >
-                        <X size={24} />
-                      </button>
-                    </div>
-                    <div className="flex-1 bg-gray-50 p-4 overflow-hidden rounded-b-2xl flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <FileText
-                          size={48}
-                          className="mx-auto mb-4 opacity-20"
-                        />
-                        <p className="text-xl font-bold mb-2">
-                          분석 리포트가 준비되었습니다
+              {/* PDF 미리보기 뷰어 (Inline) */}
+              {selectedProductId && (
+                <div className="animate-in fade-in slide-in-from-bottom-5 duration-300">
+                  <h3 className="text-xl font-black mb-4 flex items-center gap-2">
+                    <FileText className="text-red-500" /> 분석 리포트 미리보기
+                  </h3>
+
+                  <Card className="p-0 border-gray-200 shadow-sm overflow-hidden min-h-[500px] bg-gray-100 flex flex-col items-center justify-center relative">
+                    {(isLoadingPdf ||
+                      analysisStatus === "processing" ||
+                      analysisStatus === "requesting") && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10 w-full h-full p-8 text-center">
+                        <div className="relative mb-6">
+                          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-100 border-t-blue-600"></div>
+                          <Sparkles
+                            className="absolute inset-0 m-auto text-blue-400 animate-pulse"
+                            size={24}
+                          />
+                        </div>
+                        <h4 className="text-xl font-bold text-gray-900 mb-2">
+                          {analysisStatus === "processing"
+                            ? "리포트를 분석하고 있습니다"
+                            : "리포트를 불러오는 중"}
+                        </h4>
+
+                        <p className="text-gray-500 font-medium max-w-xs mx-auto text-sm mb-8 mt-4">
+                          AI가 리뷰 데이터를 꼼꼼히 분석하고 있습니다. <br />
+                          완료되면 자동으로 화면에 표시됩니다.
                         </p>
-                        <p className="text-sm">
-                          이 영역에 실제 PDF 뷰어가 표시될 예정입니다.
-                        </p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          (현재는 더미 화면입니다)
-                        </p>
+
+                        {lastCheckTime && (
+                          <p className="text-[10px] text-gray-400 mb-6">
+                            최근 확인 시간: {lastCheckTime.toLocaleTimeString()}
+                          </p>
+                        )}
+
+                        <div className="flex flex-col gap-2 w-full max-w-[200px]">
+                          <Button
+                            onClick={handleCancelAnalysis}
+                            variant="ghost"
+                            className="text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 underline py-1"
+                          >
+                            분석 취소
+                          </Button>
+                        </div>
+
+                        <div className="mt-8 flex gap-2">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    )}
+
+                    {!isLoadingPdf &&
+                      analysisStatus !== "processing" &&
+                      analysisStatus !== "requesting" &&
+                      (pdfError || (analysisStatus === "idle" && !pdfUrl)) && (
+                        <div className="text-center p-8 w-full max-w-md mx-auto">
+                          <div className="mb-4 text-amber-500">
+                            <FileText
+                              size={48}
+                              className="mx-auto opacity-20"
+                            />
+                          </div>
+                          <p className="text-gray-800 font-bold text-lg mb-2">
+                            {pdfError ||
+                              "아직 분석 리포트를 생성하지 않았습니다"}
+                          </p>
+
+                          <div className="flex flex-col gap-3 w-full">
+                            <Button
+                              onClick={() => handleStartAnalysis(false)}
+                              isLoading={isStartingAnalysis}
+                              className="bg-blue-600 text-white hover:bg-blue-700 w-full py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2"
+                            >
+                              <Sparkles size={18} /> 분석 리포트 생성 요청하기
+                            </Button>
+
+                            <Button
+                              onClick={() => handleStartAnalysis(true)}
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-700 font-bold text-xs py-2 underline"
+                            >
+                              작업이 멈췄나요? 강제 재분석 시작
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                    {!isLoadingPdf &&
+                      analysisStatus !== "processing" &&
+                      analysisStatus !== "requesting" &&
+                      !pdfError &&
+                      pdfUrl && (
+                        <div className="w-full bg-gray-200 p-8 flex justify-center min-h-[600px]">
+                          <PdfViewer pdfUrl={pdfUrl} />
+                        </div>
+                      )}
+
+                    {!isLoadingPdf &&
+                      analysisStatus !== "processing" &&
+                      analysisStatus !== "requesting" &&
+                      !pdfError &&
+                      !pdfUrl && (
+                        <div className="text-gray-400 font-medium p-10">
+                          PDF를 불러올 수 없습니다.
+                        </div>
+                      )}
+                  </Card>
                 </div>
               )}
 
-              {selectedProductId ? (
-                <>
-                  {/* 감성 분석 요약 */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="p-6 border-gray-200 shadow-sm text-center">
-                      <div className="text-4xl mb-2">😊</div>
-                      <div className="text-3xl font-black text-green-500 mb-1">
-                        72%
-                      </div>
-                      <div className="text-sm font-bold text-gray-500">
-                        긍정 리뷰
-                      </div>
-                    </Card>
-                    <Card className="p-6 border-gray-200 shadow-sm text-center">
-                      <div className="text-4xl mb-2">😐</div>
-                      <div className="text-3xl font-black text-yellow-500 mb-1">
-                        18%
-                      </div>
-                      <div className="text-sm font-bold text-gray-500">
-                        중립 리뷰
-                      </div>
-                    </Card>
-                    <Card className="p-6 border-gray-200 shadow-sm text-center">
-                      <div className="text-4xl mb-2">😞</div>
-                      <div className="text-3xl font-black text-red-500 mb-1">
-                        10%
-                      </div>
-                      <div className="text-sm font-bold text-gray-500">
-                        부정 리뷰
-                      </div>
-                    </Card>
-                  </div>
-
-                  {/* 키워드 분석 */}
-                  <Card className="p-6 border-gray-200 shadow-sm">
-                    <h3 className="text-xl font-black mb-6">주요 키워드</h3>
-                    <ErrorBoundary>
-                      <div className="flex flex-wrap gap-3">
-                        {[
-                          { word: "맛있어요", count: 156, type: "positive" },
-                          { word: "가성비", count: 98, type: "positive" },
-                          { word: "재구매", count: 87, type: "positive" },
-                          { word: "선물용", count: 76, type: "neutral" },
-                          { word: "포장", count: 65, type: "neutral" },
-                          { word: "달달해요", count: 54, type: "positive" },
-                          { word: "배송빠름", count: 43, type: "positive" },
-                          { word: "양이적어요", count: 32, type: "negative" },
-                          { word: "비싸요", count: 21, type: "negative" },
-                        ].map((keyword, i) => (
-                          <span
-                            key={i}
-                            className={`px-4 py-2 rounded-full text-sm font-bold ${
-                              keyword.type === "positive"
-                                ? "bg-green-50 text-green-600"
-                                : keyword.type === "negative"
-                                  ? "bg-red-50 text-red-600"
-                                  : "bg-gray-100 text-gray-600"
-                            }`}
-                          >
-                            {keyword.word} ({keyword.count})
-                          </span>
-                        ))}
-                      </div>
-                    </ErrorBoundary>
-                  </Card>
-
-                  {/* 리뷰 요약 */}
-                  <Card className="p-6 border-gray-200 shadow-sm">
-                    <h3 className="text-xl font-black mb-4">AI 리뷰 요약</h3>
-                    <ErrorBoundary>
-                      <div className="bg-blue-50 rounded-2xl p-6 text-sm leading-relaxed text-gray-700">
-                        <p className="mb-4">
-                          <strong className="text-blue-600">
-                            ✨ 전체 요약:
-                          </strong>{" "}
-                          대부분의 고객들이 제품의 맛과 품질에 높은 만족도를
-                          보이고 있습니다. 특히 "맛있어요", "가성비", "재구매"
-                          등의 키워드가 자주 언급되며, 선물용으로도 인기가
-                          높습니다.
-                        </p>
-                        <p className="mb-4">
-                          <strong className="text-green-600">
-                            👍 긍정 포인트:
-                          </strong>{" "}
-                          달콤한 맛, 고급스러운 포장, 빠른 배송이 주요 장점으로
-                          꼽힙니다.
-                        </p>
-                        <p>
-                          <strong className="text-red-600">
-                            👎 개선 포인트:
-                          </strong>{" "}
-                          일부 고객들은 양이 적다는 의견과 가격이 다소 높다는
-                          피드백을 주었습니다.
-                        </p>
-                      </div>
-                    </ErrorBoundary>
-                  </Card>
-                </>
-              ) : (
+              {!selectedProductId && (
                 <Card className="p-12 border-gray-200 shadow-sm text-center">
                   <div className="text-6xl mb-4">📊</div>
                   <h3 className="text-xl font-black text-gray-400 mb-2">
                     제품을 선택하세요
                   </h3>
                   <p className="text-sm text-gray-400">
-                    리뷰 URL이 등록된 제품의 분석 결과를 확인할 수 있습니다
+                    상단에서 제품을 선택하면 상세 분석 리포트가 표시됩니다
                   </p>
                 </Card>
               )}

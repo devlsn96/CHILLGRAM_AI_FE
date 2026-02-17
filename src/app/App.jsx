@@ -22,13 +22,12 @@ import DashboardPage from "@/pages/DashboardPage";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import ProductPackagePage from "@/pages/ProductPackagePage";
 import ADPage from "@/pages/ad/ADPage";
-import ADResultPage from "@/pages/ad/ADResultPage";
 import SnsManagementPage from "@/pages/SnsManagement.jsx";
 import ProductManagementPage from "@/pages/ProductManagement";
 import ProductAdStatusPage from "@/pages/ProductAdStatus";
 import AnalyticsReportPage from "@/pages/AnalyticsReportPage";
-// ProjectAdDetail removed - now using ADResultPage for project details
-import ProjectDesignDetail from "@/pages/ProjectDesignDetail";
+// ProjectAdDetail & ProjectDesignDetail now consolidated into ADResultPage
+import ADResultPage from "@/pages/ad/ADResultPage";
 
 import { parseJwt } from "@/utils/jwt";
 import YoutubeCallbackPage from "../pages/oauth/YoutubeCallbackPage";
@@ -88,7 +87,7 @@ export default function App() {
             />
             <Route
               path="/dashboard/products/:productId/projectDesignDetail/:projectId"
-              element={<ProjectDesignDetail />}
+              element={<ADResultPage />}
             />
             <Route
               path="/dashboard/products/:productId/addPackage"

@@ -174,12 +174,12 @@ export default function ProductAdStatusPage() {
                       <tr
                         key={project.id}
                         onClick={() => {
-                          const detailPath =
-                            project.type === "design"
-                              ? `./projectDesignDetail/${project.id}`
-                              : `./projectAdDetail/${project.id}`;
+                          const detailPath = `./projectAdDetail/${project.id}`;
                           navigate(detailPath, {
-                            state: { projectName: project.title },
+                            state: {
+                              projectName: project.title,
+                              projectType: project.type
+                            },
                           });
                         }}
                         className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer group h-[81px]"

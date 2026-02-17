@@ -1,7 +1,8 @@
 ﻿import { useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { fetchProjectContentsWithAssets } from "@/services/api/contentApi";
+import { fetchJob } from "@/services/api/ad";
 import {
   BadgeCheck,
   Download,
@@ -13,6 +14,9 @@ import {
   Sparkles,
   Video,
   ArrowLeft,
+  LayoutGrid,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 import Container from "@/components/common/Container";
@@ -21,6 +25,7 @@ import loadingGif from "@/assets/Loding.gif";
 import Button from "../../components/common/Button";
 
 const TYPE_CONFIG = {
+  design: { label: "도안", icon: LayoutGrid },
   product: { label: "제품 이미지", icon: ImageIcon },
   sns: { label: "SNS 이미지", icon: Share2 },
   shorts: { label: "숏츠", icon: Video },
@@ -28,6 +33,7 @@ const TYPE_CONFIG = {
 };
 
 const TYPE_TITLES = {
+  design: "패키지 도안 AI",
   product: "제품 이미지 AI",
   sns: "SNS 이미지 AI",
   shorts: "숏츠 AI",
@@ -42,6 +48,28 @@ export default function ADResultPage() {
 
   const [page, setPage] = useState(0);
   const pageSize = 10;
+
+  // 도안 생성을 위한 잡(Job) 추적 로직 (ProjectDesignDetail에서 가져옴)
+  const storageKey = `cg_jobs_${projectId}`;
+  const jobIds = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey) || "[]");
+    } catch {
+      return [];
+    }
+  }, [storageKey]);
+
+  const jobQueries = useQueries({
+    queries: jobIds.map((id) => ({
+      queryKey: ["job", id],
+      queryFn: () => fetchJob(id),
+      refetchInterval: (query) => {
+        const status = query.state.data?.status;
+        if (status === "SUCCEEDED" || status === "FAILED") return false;
+        return 3000;
+      },
+    })),
+  });
 
   // location.state에서 프로젝트 이름 가져오기 (광고 생성 플로우에서 전달)
   const projectName =
@@ -60,10 +88,10 @@ export default function ADResultPage() {
   // 헤더 제목 결정
   const headerTitle =
     projectName ||
-    (isProjectDetailMode ? "프로젝트 상세" : "광고 콘텐츠 생성 결과");
+    (isProjectDetailMode ? "프로젝트 상세" : "광고 및 도안 생성 결과");
   const headerDesc = isProjectDetailMode
-    ? "프로젝트에서 생성된 모든 광고 콘텐츠"
-    : "AI가 생성한 다양한 광고 콘텐츠를 확인하세요.";
+    ? "프로젝트에서 생성된 모든 광고 및 도안 콘텐츠"
+    : "AI가 생성한 다양한 광고 및 도안 콘텐츠를 확인하세요.";
 
   // 1. 실제 데이터 조회
   const { data: realResults = [], isLoading, isError } = useQuery({
@@ -74,21 +102,16 @@ export default function ADResultPage() {
 
   // 데이터 매핑 (백엔드 -> 프론트엔드 UI 형식)
   const mappedResults = useMemo(() => {
-    return realResults.map((item) => {
-      // 1. 에셋 추출 (PRIMARY 타입 우선, 없으면 첫 번째)
+    // 1. DB에서 가져온 실제 결과 매핑
+    const dbResults = realResults.map((item) => {
       const assets = item.assets || [];
       const primaryAsset =
         assets.find((a) => a.assetType === "PRIMARY") || assets[0] || {};
 
-      // 2. 이미지 URL 처리
       const imageUrl =
         primaryAsset.fileUrl || primaryAsset.file_url || primaryAsset.url;
       const thumbUrl = primaryAsset.thumbUrl || primaryAsset.thumb_url;
 
-      // 3. 타입 매핑 (백엔드 ENUM -> 프론트엔드 소문자 키)
-      // IMAGE -> product (기본값)
-      // VIDEO -> shorts
-      // BANNER -> banner
       let type = "product";
       const contentType = (
         item.contentType ||
@@ -98,17 +121,18 @@ export default function ADResultPage() {
 
       if (contentType === "VIDEO") type = "shorts";
       else if (contentType === "BANNER") type = "banner";
+      else if (contentType === "DESIGN") type = "design";
       else if (contentType === "SNS" || item.platform === "Instagram")
-        type = "sns"; // 플랫폼이 인스타면 SNS로 분류
+        type = "sns";
 
       return {
         id: item.contentId || item.id,
-        type: type, // product, sns, shorts, banner
+        type: type,
         title: item.title,
         description: item.body || item.description,
         date: (item.createdAt || item.created_at || "").split("T")[0] || "-",
         status: item.status || "활성",
-        platform: item.platform, // Instagram, YouTube, etc.
+        platform: item.platform,
         stats: {
           views: item.viewCount ?? item.view_count ?? 0,
           likes: item.likeCount ?? item.like_count ?? 0,
@@ -116,14 +140,59 @@ export default function ADResultPage() {
         },
         imageUrl,
         thumbUrl,
-        // DRAFT 상태이거나 에셋이 없으면 생성 중으로 간주
         isGenerating:
           item.status === "GENERATING" ||
           item.status === "DRAFT" ||
           (!imageUrl && item.status !== "ACTIVE"),
       };
     });
-  }, [realResults]);
+
+    // 2. 현재 폴링 중인 잡(Job) 결과 합치기 (도안 전용)
+    const pollingResults = [];
+    jobQueries.forEach((q) => {
+      const job = q.data;
+      if (!job) return;
+
+      // 이미 DB 결과에 포함된 것이라면 패스 (outputUri 등으로 체크 가능하지만 여기선 jobId로 간단히)
+      const exists = dbResults.some((c) => String(c.id).includes(String(job.jobId)));
+      if (exists) return;
+
+      if (job.status === "SUCCEEDED" && job.outputUri) {
+        pollingResults.push({
+          id: `job-${job.jobId}`,
+          type: "design",
+          title: "새로운 패키지 도안",
+          description: "방금 생성된 패키지 도안입니다.",
+          date: new Date().toISOString().substring(0, 10),
+          status: "활성",
+          imageUrl: job.outputUri,
+          isNew: true,
+        });
+      } else if (job.status === "REQUESTED" || job.status === "RUNNING") {
+        pollingResults.push({
+          id: `job-${job.jobId}`,
+          type: "design",
+          title: "도안 생성 중...",
+          description: "AI가 도안을 생성하고 있습니다.",
+          date: "-",
+          status: "생성중",
+          isGenerating: true,
+        });
+      } else if (job.status === "FAILED") {
+        pollingResults.push({
+          id: `job-${job.jobId}`,
+          type: "design",
+          title: "도안 생성 실패",
+          description: job.errorMessage || "알 수 없는 오류가 발생했습니다.",
+          date: "-",
+          status: "실패",
+          isFailed: true,
+        });
+      }
+    });
+
+    return [...pollingResults, ...dbResults];
+  }, [realResults, jobQueries]);
 
   const filteredResultsBase = useMemo(() => {
     const base = selectedTypes.length
@@ -161,7 +230,7 @@ export default function ADResultPage() {
 
   return (
     <div className="min-h-full bg-[#F9FAFB] py-12">
-      <Container>
+      <Container className="max-w-6xl">
         {/* 뒤로가기 버튼 (프로젝트 상세 모드일 때만) */}
         {isProjectDetailMode && (
           <div className="mb-6">
@@ -216,8 +285,9 @@ export default function ADResultPage() {
           </div>
         )}
 
-        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           <StatCard label="전체" value={stats.total} icon={Sparkles} />
+          <StatCard label="도안" value={stats.design} icon={LayoutGrid} />
           <StatCard
             label="제품 이미지"
             value={stats.product}
@@ -260,29 +330,48 @@ export default function ADResultPage() {
                 >
                   {/* 이미지/영상 영역 */}
                   <div
-                    className={`aspect-4/3 w-full flex items-center justify-center ${isVideo
+                    className={`aspect-4/3 w-full flex items-center justify-center relative overflow-hidden ${isVideo
                       ? "bg-gray-800"
                       : "bg-linear-to-br from-[#F9FAFB] to-[#E5E7EB]"
                       }`}
                   >
                     {item.isGenerating ? (
-                      // 생성 중일 때 로딩 GIF 표시
-                      <div className="flex flex-col items-center justify-center">
-                        <img
-                          src={loadingGif}
-                          alt="생성 중..."
-                          className="w-24 h-24 animate-spin"
-                          style={{ mixBlendMode: "screen" }}
-                        />
-                        <p className="mt-2 text-sm font-bold text-gray-400">
-                          영상 생성 중...
+                      <div className="flex flex-col items-center justify-center p-4 text-center">
+                        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                        <p className="mt-2 text-sm font-bold text-blue-500 animate-pulse">
+                          {item.type === "design" ? "AI 도안 생성 중..." : "AI 콘텐츠 생성 중..."}
                         </p>
-                        <p className="text-xs text-gray-500">(최대 10분)</p>
+                        {!isVideo && (
+                          <p className="mt-1 text-[10px] text-gray-400">잠시만 기다려 주세요.</p>
+                        )}
+                        {isVideo && (
+                          <p className="text-[10px] text-gray-500">(최대 10분)</p>
+                        )}
                       </div>
+                    ) : item.isFailed ? (
+                      <div className="flex flex-col items-center justify-center p-4 text-center">
+                        <AlertCircle className="h-10 w-10 text-red-400" />
+                        <p className="mt-2 text-sm font-bold text-red-400">생성 실패</p>
+                        <p className="mt-1 text-[10px] text-gray-400 line-clamp-2">
+                          {item.description}
+                        </p>
+                      </div>
+                    ) : item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="h-full w-full object-cover transition-transform hover:scale-105"
+                      />
                     ) : isVideo ? (
                       <Video className="h-12 w-12 text-gray-400" />
                     ) : (
                       <FileImage className="h-10 w-10 text-gray-300" />
+                    )}
+
+                    {item.isNew && (
+                      <div className="absolute top-3 right-3 bg-blue-500 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg animate-bounce">
+                        NEW
+                      </div>
                     )}
                   </div>
 
@@ -327,24 +416,24 @@ export default function ADResultPage() {
 
                     {/* SNS/Shorts 통계 */}
                     {isSnsOrShorts && item.stats && (
-                      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+                      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4 text-xs">
                         <div className="text-center">
-                          <p className="text-lg font-black text-gray-800">
+                          <p className="text-base font-black text-gray-800">
                             {item.stats.views.toLocaleString()}
                           </p>
-                          <p className="text-xs text-gray-400">조회</p>
+                          <p className="text-gray-400">조회</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-lg font-black text-gray-800">
+                          <p className="text-base font-black text-gray-800">
                             {item.stats.likes.toLocaleString()}
                           </p>
-                          <p className="text-xs text-gray-400">좋아요</p>
+                          <p className="text-gray-400">좋아요</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-lg font-black text-gray-800">
+                          <p className="text-base font-black text-gray-800">
                             {item.stats.shares.toLocaleString()}
                           </p>
-                          <p className="text-xs text-gray-400">공유</p>
+                          <p className="text-gray-400">공유</p>
                         </div>
                       </div>
                     )}
@@ -363,16 +452,46 @@ export default function ADResultPage() {
                           >
                             업로드
                           </button>
-                          <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                          <button
+                            onClick={() => {
+                              const link = document.createElement("a");
+                              link.href = item.imageUrl;
+                              link.download = `${item.title}.png`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                            disabled={!item.imageUrl}
+                          >
                             <Download className="h-4 w-4" /> 다운로드
                           </button>
                         </>
                       ) : (
                         <>
-                          <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                          <button
+                            onClick={() => {
+                              if (item.imageUrl) window.open(item.imageUrl, "_blank");
+                            }}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                            disabled={!item.imageUrl}
+                          >
                             상세
                           </button>
-                          <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                          <button
+                            onClick={() => {
+                              if (item.imageUrl) {
+                                const link = document.createElement("a");
+                                link.href = item.imageUrl;
+                                link.download = `${item.title}.png`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                            disabled={!item.imageUrl}
+                          >
                             <Download className="h-4 w-4" /> 다운로드
                           </button>
                         </>
@@ -438,17 +557,17 @@ export default function ADResultPage() {
 
 function StatCard({ label, value, icon: Icon }) {
   return (
-    <Card className="relative bg-white border-gray-200 shadow-md hover:shadow-lg hover:border-blue-300 transition-all duration-300 h-32 p-5 flex flex-col justify-end overflow-hidden group">
+    <Card className="relative bg-white border-gray-200 shadow-md hover:shadow-lg hover:border-blue-300 transition-all duration-300 h-24 p-4 flex flex-col justify-end overflow-hidden group">
       {Icon && (
-        <div className="absolute top-4 right-4 p-2 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-          <Icon size={24} className="text-blue-400" strokeWidth={2} />
+        <div className="absolute top-3 right-3 p-1.5 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+          <Icon size={16} className="text-blue-400" strokeWidth={2.5} />
         </div>
       )}
       <div className="flex flex-col text-left">
-        <span className="text-sm font-bold text-gray-400 mb-1 leading-tight tracking-tight">
+        <span className="text-[12px] font-bold text-gray-400 mb-0.5 leading-tight tracking-tight whitespace-nowrap">
           {label}
         </span>
-        <p className="text-3xl font-black text-[#111827] tabular-nums leading-tight">
+        <p className="text-2xl font-black text-[#111827] tabular-nums leading-none">
           {value}
         </p>
       </div>

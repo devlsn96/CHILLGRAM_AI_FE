@@ -17,6 +17,7 @@ import {
   fetchAdGuides,
   fetchAdCopies,
   createAdContents,
+  saveAdLog, // ✅ New function
   createBasicImageJob,
   fetchJob,
   fetchBasicImageResult,
@@ -132,8 +133,9 @@ export default function ADPage() {
   const [selectedProductImageId, setSelectedProductImageId] = useState("");
 
   // 비용 절감 모드(네 코드 유지)
-  const USE_GUIDE_API = false;
-  const USE_COPY_API = false;
+  // 비용 절감 모드(네 코드 유지) - ✅ API Enabled
+  const USE_GUIDE_API = true;
+  const USE_COPY_API = true;
 
   const LOCAL_GUIDE_RESPONSE = useMemo(
     () => ({
@@ -207,33 +209,98 @@ export default function ADPage() {
   const guideMutation = useMutation({ mutationFn: fetchAdGuides });
   const copyMutation = useMutation({ mutationFn: fetchAdCopies });
   const createMutation = useMutation({ mutationFn: createAdContents });
+  const saveLogMutation = useMutation({ mutationFn: saveAdLog }); // ✅ Log mutation
 
   // ✅ BASIC 프리뷰 생성
   const generateProductImages = useCallback(async () => {
-  if (!attachedFile)
-    throw new Error("첨부파일이 없습니다. 제품 이미지 후보 생성 불가.");
+    if (!attachedFile)
+      throw new Error("첨부파일이 없습니다. 제품 이미지 후보 생성 불가.");
 
-  // ★ 여기서 선택된 가이드/카피를 뽑는다
-  const selectedGuide = pickSelectedGuide(guideResponse, selectedGuideId);
-  const selectedCopy = pickSelectedCopy(copyResponse, selectedCopyId);
+    // ★ 여기서 선택된 가이드/카피를 뽑는다
+    const selectedGuide = pickSelectedGuide(guideResponse, selectedGuideId);
+    const selectedCopy = pickSelectedCopy(copyResponse, selectedCopyId);
 
-  // ★ prompt/instruction을 “반드시 문자열”로 만든다
-  const prompt = (selectedGuide?.title ?? "").trim();
-  // instruction은 너 목적에 맞게 고르자:
-  // - 그냥 카피 본문: finalCopy
-  // - 배너용 지시문: bannerPrompt (있으면 이게 더 맞음)
-  const instruction = (
-    selectedCopy?.bannerPrompt ||
-    selectedCopy?.finalCopy ||
-    selectedCopy?.concept ||
-    ""
-  ).trim();
+    // ★ prompt/instruction을 “반드시 문자열”로 만든다
+    const prompt = (selectedGuide?.title ?? "").trim();
+    // instruction은 너 목적에 맞게 고르자:
+    // - 그냥 카피 본문: finalCopy
+    // - 배너용 지시문: bannerPrompt (있으면 이게 더 맞음)
+    const instruction = (
+      selectedCopy?.bannerPrompt ||
+      selectedCopy?.finalCopy ||
+      selectedCopy?.concept ||
+      ""
+    ).trim();
 
-  if (!prompt && !instruction) {
-    throw new Error("가이드/카피 선택값이 비어있습니다. Step2~3 선택 확인 필요");
-  }
+    if (!prompt && !instruction) {
+      throw new Error("가이드/카피 선택값이 비어있습니다. Step2~3 선택 확인 필요");
+    }
 
-  const previewPayload = {
+    const previewPayload = {
+      productId,
+      productName,
+      projectTitle,
+      adGoal,
+      requestText,
+      selectedKeywords,
+      adFocus,
+      n: 3,
+
+      // ✅ 이걸 넣어야 서버에서 통과함
+      prompt,
+      instruction,
+
+      // (선택) 디버깅/추적용으로 같이 보내도 됨
+      selectedGuideId,
+      selectedCopyId,
+    };
+
+    setPreviewError("");
+    setIsLoadingPreviewImages(true);
+    setProductImages([]);
+    setSelectedProductImageId("");
+
+    try {
+      const { jobId } = await createBasicImageJob({
+        payload: previewPayload,
+        file: attachedFile,
+      });
+      setPreviewJobId(jobId);
+
+      const job = await pollJobUntilDone(jobId, { intervalMs: 1000, timeoutMs: 60000 });
+      if (job.status === "FAILED") {
+        throw new Error(job.errorMessage || "제품 이미지 후보 생성 실패");
+      }
+      const result = await fetchBasicImageResult(jobId);
+      const candidates = Array.isArray(result?.candidates) ? result.candidates : [];
+      const fallbackUrl = result?.outputUri || result?.url || null;
+
+      const finalCandidates =
+        candidates.length > 0
+          ? candidates
+          : (fallbackUrl ? [{ id: "0", url: fallbackUrl, label: "preview", meta: null }] : []);
+
+      if (finalCandidates.length === 0) {
+        throw new Error("제품 이미지 후보가 생성되지 않았습니다.");
+      }
+
+      const mapped = finalCandidates.map((c, idx) => ({
+        id: String(c.id ?? `c${idx + 1}`),
+        url: c.url,
+        label: c.label ?? `image${idx + 1}`,
+        meta: c.meta ?? null,
+      }));
+
+      setProductImages(mapped);
+      setSelectedProductImageId(mapped[0]?.id ?? "");
+    } catch (e) {
+      setPreviewError(e?.message || "제품 이미지 후보 생성 실패");
+      throw e;
+    } finally {
+      setIsLoadingPreviewImages(false);
+    }
+  }, [
+    attachedFile,
     productId,
     productName,
     projectTitle,
@@ -241,75 +308,11 @@ export default function ADPage() {
     requestText,
     selectedKeywords,
     adFocus,
-    n: 3,
-
-    // ✅ 이걸 넣어야 서버에서 통과함
-    prompt,
-    instruction,
-
-    // (선택) 디버깅/추적용으로 같이 보내도 됨
+    guideResponse,
+    copyResponse,
     selectedGuideId,
     selectedCopyId,
-  };
-
-  setPreviewError("");
-  setIsLoadingPreviewImages(true);
-  setProductImages([]);
-  setSelectedProductImageId("");
-
-  try {
-    const { jobId } = await createBasicImageJob({
-      payload: previewPayload,
-      file: attachedFile,
-    });
-    setPreviewJobId(jobId);
-
-    const job = await pollJobUntilDone(jobId, { intervalMs: 1000, timeoutMs: 60000 });
-    if (job.status === "FAILED") {
-      throw new Error(job.errorMessage || "제품 이미지 후보 생성 실패");
-    }
-    const result = await fetchBasicImageResult(jobId);
-    const candidates = Array.isArray(result?.candidates) ? result.candidates : [];
-    const fallbackUrl = result?.outputUri || result?.url || null;
-
-    const finalCandidates =
-      candidates.length > 0
-        ? candidates
-        : (fallbackUrl ? [{ id: "0", url: fallbackUrl, label: "preview", meta: null }] : []);
-
-    if (finalCandidates.length === 0) {
-      throw new Error("제품 이미지 후보가 생성되지 않았습니다.");
-    }
-
-    const mapped = finalCandidates.map((c, idx) => ({
-      id: String(c.id ?? `c${idx + 1}`),
-      url: c.url,
-      label: c.label ?? `image${idx + 1}`,
-      meta: c.meta ?? null,
-    }));
-
-    setProductImages(mapped);
-    setSelectedProductImageId(mapped[0]?.id ?? "");
-  } catch (e) {
-    setPreviewError(e?.message || "제품 이미지 후보 생성 실패");
-    throw e;
-  } finally {
-    setIsLoadingPreviewImages(false);
-  }
-}, [
-  attachedFile,
-  productId,
-  productName,
-  projectTitle,
-  adGoal,
-  requestText,
-  selectedKeywords,
-  adFocus,
-  guideResponse,
-  copyResponse,
-  selectedGuideId,
-  selectedCopyId,
-]);
+  ]);
   const handleRegenerateImages = useCallback(async () => {
     try {
       await generateProductImages();
@@ -353,15 +356,43 @@ export default function ADPage() {
       }
 
       try {
-        const resp = await guideMutation.mutateAsync({
-          productId,
-          baseDate,
-          projectTitle,
-          adGoal,
-          requestText,
-          selectedKeywords,
-          adFocus,
-        });
+        // 0~4 (UI) -> ENUM (Server)
+        const AD_GOAL_ENUMS = [
+          "BRAND_AWARENESS", // 0
+          "EMPATHY",         // 1
+          "REWARD",          // 2
+          "ENGAGEMENT",      // 3
+          "SALES",           // 4
+        ];
+        const goalEnum = AD_GOAL_ENUMS[Number(adGoal)] || "BRAND_AWARENESS";
+
+        // 0~100 (UI) -> 0~4 (Server)
+        const messageFocus = Math.min(4, Math.max(0, Math.round(adFocus / 25)));
+
+        const guidePayload = {
+          productId, // ✅ Added back!
+          // Project fields
+          title: projectTitle,
+          description: requestText,
+          adMessageFocus: messageFocus,
+          adMessageTarget: Number(adGoal),
+          projectType: "SNS",
+
+          // Guide fields
+          trend: Array.isArray(selectedKeywords) ? selectedKeywords.join(", ") : "",
+          reviews: [
+            "진짜 인생 맛집입니다. 너무 맛있어요!",
+            "배송도 빠르고 포장도 꼼꼼해서 좋았습니다.",
+            "지인 추천으로 샀는데 대만족입니다. 재구매 의사 100%!"
+          ],
+
+          // Optional/Context
+          // baseDate, 
+        };
+
+        console.log("Guide Payload:", JSON.stringify(guidePayload, null, 2));
+
+        const resp = await guideMutation.mutateAsync(guidePayload);
 
         const guides = resp?.guides ?? [];
         if (!Array.isArray(guides) || guides.length === 0)
@@ -384,22 +415,21 @@ export default function ADPage() {
         setCopyResponse(LOCAL_COPY_RESPONSE);
         setSelectedCopyId(
           LOCAL_COPY_RESPONSE.recommendedCopyId ||
-            LOCAL_COPY_RESPONSE.copies[0].id,
+          LOCAL_COPY_RESPONSE.copies[0].id,
         );
         setCurrentStep(3);
         return;
       }
 
       try {
+        // ✅ selectedGuide object needs to be passed fully
+        const selectedGuide = pickSelectedGuide(guideResponse, selectedGuideId);
+
         const resp = await copyMutation.mutateAsync({
           productId,
-          baseDate,
-          projectTitle,
-          adGoal,
-          requestText,
-          selectedKeywords,
-          adFocus,
-          guideId: selectedGuideId,
+          // Spec only requires these fields for Copy Generation
+          selectedGuideId,
+          selectedGuideline: selectedGuide,
         });
 
         const copies = resp?.copies ?? [];
@@ -436,7 +466,7 @@ export default function ADPage() {
       const selectedProduct = productImages.find(
         (x) => String(x.id) === String(selectedProductImageId),
       );
-      
+
       if (!selectedProduct?.url) {
         console.error(
           "선택된 제품 기본 이미지 정보가 없습니다.",
@@ -463,8 +493,8 @@ export default function ADPage() {
 
         selectedCopy: {
           id: selectedCopy.id,
-          title: selectedCopy.concept,          
-          body: selectedCopy.finalCopy || "",   
+          title: selectedCopy.concept,
+          body: selectedCopy.finalCopy || "",
           productName: selectedCopy.productName || productName,
           selectedConcept: selectedCopy.concept,
           finalCopy: selectedCopy.finalCopy,
@@ -476,25 +506,41 @@ export default function ADPage() {
         selectedTypes,
         selectedProductImage: {
           candidateId: selectedProduct.id,
-          url: selectedProduct.url, 
+          url: selectedProduct.url,
           meta: selectedProduct.meta,
           previewJobId,
         },
       };
 
-      const form = new FormData();
-      form.append("payload", JSON.stringify(payload));
-      form.append("file", attachedFile);
+      // ✅ Use saveAdLog instead of createAdContents for logging
+      try {
+        const logData = {
+          finalCopy: payload.selectedCopy,
+          guideline: payload.selectedGuide,
+          selectionReason: "User Selected", // or add input for reason
+          // Add other metadata if backend allows extra fields, otherwise keep minimal
+          productId: payload.productId, // Just in case, though URL param covers it
+        };
 
-      const created = await createMutation.mutateAsync({ productId, formData: form });
-      navigate("./result", { state: { ...payload, created } });
+        const logResult = await saveLogMutation.mutateAsync({
+          productId,
+          data: logData
+        });
+
+        // Navigate to result page (Legacy support: passing full payload)
+        navigate("./result", { state: { ...payload, logResult, created: { success: true } } });
+
+      } catch (e) {
+        console.error("Failed to save ad log:", e);
+        // Optionally fallback to createAdContents or just show error
+      }
       return;
     }
   };
 
   const isLoadingGuides = USE_GUIDE_API ? guideMutation.isPending : false;
   const isLoadingCopies = USE_COPY_API ? copyMutation.isPending : false;
-  const isCreating = createMutation.isPending;
+  const isCreating = saveLogMutation.isPending || createMutation.isPending; // ✅ Update loading state
 
   return (
     <ADStepLayout
@@ -533,9 +579,9 @@ export default function ADPage() {
           </div>
         ) : null}
 
-        {createMutation.isError ? (
+        {createMutation.isError || saveLogMutation.isError ? ( // ✅ Update Error check
           <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">
-            {createMutation.error?.message || "최종 광고 생성 실패"}
+            {(createMutation.error || saveLogMutation.error)?.message || "최종 광고 생성 실패"}
           </div>
         ) : null}
 

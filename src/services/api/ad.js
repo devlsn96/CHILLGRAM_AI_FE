@@ -32,7 +32,18 @@ export function fetchAdCopies(payload) {
 }
 
 /**
- * 최종 광고 생성
+ * 최종 광고 생성 결과 저장 (Log)
+ * POST /api/advertising/{productId}/log
+ */
+export async function saveAdLog({ productId, data }) {
+  return httpJson(`/api/advertising/${productId}/log`, {
+    method: "POST",
+    body: data,
+  });
+}
+
+/**
+ * (Legacy) 최종 광고 생성 - File Upload 포함
  */
 export async function createAdContents({ productId, formData }) {
   return httpForm(`/api/advertising/${productId}/ads`, {
@@ -46,16 +57,16 @@ export async function createBasicImageJob({ payload, file, baseFile }) {
     typeof payload?.selectedGuide === "string"
       ? payload.selectedGuide
       : payload?.selectedGuide?.title ??
-        payload?.selectedGuide?.summary ??
-        "";
+      payload?.selectedGuide?.summary ??
+      "";
 
   const copyText =
     typeof payload?.selectedCopy === "string"
       ? payload.selectedCopy
       : payload?.selectedCopy?.bannerPrompt ??
-        payload?.selectedCopy?.finalCopy ??
-        payload?.selectedCopy?.concept ??
-        "";
+      payload?.selectedCopy?.finalCopy ??
+      payload?.selectedCopy?.concept ??
+      "";
 
   const prompt =
     (payload?.prompt && String(payload.prompt).trim()) ||

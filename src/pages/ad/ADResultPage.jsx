@@ -102,6 +102,27 @@ export default function ADResultPage() {
 
   // 데이터 매핑 (백엔드 -> 프론트엔드 UI 형식)
   const mappedResults = useMemo(() => {
+    // 0. 방금 생성된 결과 (location.state)
+    const tempResults = [];
+    if (location.state?.selectedCopy && location.state?.selectedProductImage) {
+      const sc = location.state.selectedCopy;
+      const si = location.state.selectedProductImage;
+      // 기본적으로 'product' 타입으로 간주 (또는 bannerSize 있으면 banner 등 로직 추가 가능)
+      // 여기서는 심플하게 P-Shot 결과로 가정
+      tempResults.push({
+        id: "temp-new",
+        type: "product",
+        title: sc.concept || sc.title || "새 광고",
+        description: sc.finalCopy || sc.body || "방금 생성된 광고입니다.",
+        date: new Date().toISOString().split("T")[0],
+        status: "활성", // 이미 생성 완료된 것으로 간주
+        platform: "Instagram", // or derived from state
+        imageUrl: si.url,
+        isNew: true,
+        stats: { views: 0, likes: 0, shares: 0 },
+      });
+    }
+
     // 1. DB에서 가져온 실제 결과 매핑
     const dbResults = realResults.map((item) => {
       const assets = item.assets || [];

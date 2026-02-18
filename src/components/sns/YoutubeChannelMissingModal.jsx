@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Youtube, X } from "lucide-react";
 
 /**

@@ -1,40 +1,9 @@
+import { loginApi } from "@/data/authApi";
+import { useAuthStore } from "@/stores/authStore";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
-import { loginApi } from "../../data/authApi";
-
-function SimpleField({ label, type = "text", value, onChange, placeholder }) {
-  return (
-    <label className="block">
-      <div className="mb-3 text-lg font-semibold text-black">{label}</div>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="h-12 w-full rounded-lg bg-gray-50 px-4 text-base outline-none ring-0 focus:ring-2 focus:ring-[#61AFFE]"
-      />
-    </label>
-  );
-}
-
-function SimpleButton({ disabled, onClick, children }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={[
-        "mt-6 h-12 w-full rounded-lg text-lg font-bold text-white",
-        disabled
-          ? "bg-gray-200 cursor-not-allowed"
-          : "bg-[#61AFFE] hover:brightness-95",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
+import { SimpleField } from "../common/SimpleField";
+import { SimpleButton } from "../common/SimpleButton";
 
 export default function LoginView({ onGoSignup, onClose }) {
   const navigate = useNavigate();

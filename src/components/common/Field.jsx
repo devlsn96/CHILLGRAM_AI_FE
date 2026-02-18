@@ -1,3 +1,5 @@
+import ErrorMessage from "./ErrorMessage";
+
 export function Field({
   label,
   required,
@@ -33,7 +35,7 @@ export function Field({
       />
 
       {showError ? (
-        <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
+        <ErrorMessage className="mt-2 font-medium">{error}</ErrorMessage>
       ) : null}
     </label>
   );

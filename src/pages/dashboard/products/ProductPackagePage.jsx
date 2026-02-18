@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   ImageIcon,
   FileUp,
@@ -21,7 +21,7 @@ import {
   createProject,
 } from "@/services/api/projectApi";
 import { createBasicImageJob } from "@/services/api/ad";
-import Button from "../components/common/Button";
+import Button from "@/components/common/Button";
 
 // Dummy data removed. Fetching actual images from ad projects.
 

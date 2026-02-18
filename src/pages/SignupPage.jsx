@@ -5,7 +5,7 @@ export default function SignupPage() {
   const navigate = useNavigate();
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-[#DEEEFF]">
+    <main className="min-h-[calc(100vh-64px)] bg-primary/15">
       <section className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center justify-center px-4 py-10">
         <div className="w-full rounded-[24px] bg-white px-8 py-10 shadow-xl">
           <div className="text-center">

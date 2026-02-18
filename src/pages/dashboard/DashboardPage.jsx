@@ -12,15 +12,13 @@ import Container from "@/components/common/Container";
 import Card from "@/components/common/Card";
 import { useAuthStore } from "@/stores/authStore";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import { QuickButton } from "@/components/common/QuickButton";
+import { StatItem } from "@/components/common/StatItem";
+import { ACTIVITIES_LOGS } from "@/data/activity";
 
 export default function DashboardPage() {
   const navigator = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const activities = [
-    { title: "초콜릿 신제품 광고", desc: "광고 생성", time: "2시간 전" },
-    { title: "인스타그램 캠페인", desc: "SNS 게시", time: "5시간 전" },
-    { title: "유기농 과자 시리즈", desc: "제품 추가", time: "1일 전" },
-  ];
 
   return (
     <div className="min-h-full py-8">
@@ -37,19 +35,19 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
           <StatItem
             title="진행 중 프로젝트"
-            value="8"
+            value="3"
             icon={LayoutGrid}
             color="text-blue-500"
           />
           <StatItem
             title="생성된 광고"
-            value="18"
+            value="12"
             icon={ImageIcon}
             color="text-green-500"
           />
           <StatItem
             title="SNS 게시 수"
-            value="10"
+            value="24"
             icon={TrendingUp}
             color="text-purple-500"
           />
@@ -66,7 +64,7 @@ export default function DashboardPage() {
                   최근에 수행한 작업들입니다
                 </p>
                 <div className="space-y-4">
-                  {activities.map((item, idx) => (
+                  {ACTIVITIES_LOGS.map((item, idx) => (
                     <div
                       key={idx}
                       className="flex justify-between items-center p-5 bg-[#F9FAFB] rounded-3xl hover:bg-gray-50 transition-colors cursor-pointer"
@@ -76,7 +74,7 @@ export default function DashboardPage() {
                           {item.title}
                         </div>
                         <div className="text-sm text-gray-400 mt-1">
-                          {item.desc}
+                          {item.type}
                         </div>
                       </div>
                       <div className="text-sm text-gray-400">{item.time}</div>
@@ -119,31 +117,5 @@ export default function DashboardPage() {
         </div>
       </Container>
     </div>
-  );
-}
-
-function StatItem({ title, value, icon: Icon, color }) {
-  return (
-    <Card className="flex h-32 flex-row items-center justify-between px-8 border border-gray-200 shadow-md bg-white hover:border-gray-300 hover:shadow-lg transition-all duration-300 group">
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-bold tracking-tight text-gray-400">
-          {title}
-        </span>
-        <div className="text-3xl font-black text-gray-900">{value}</div>
-      </div>
-      {Icon && <Icon size={40} className={color} strokeWidth={2.5} />}
-    </Card>
-  );
-}
-
-function QuickButton({ icon: Icon, label, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-700 flex items-center justify-center gap-3 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all shadow-sm"
-    >
-      {Icon && <Icon size={20} className="text-gray-400" />}
-      {label}
-    </button>
   );
 }

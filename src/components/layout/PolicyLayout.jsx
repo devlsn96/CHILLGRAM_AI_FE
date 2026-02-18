@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-
-function slugify(id) {
-  return String(id).replace(/\s+/g, "-").toLowerCase();
-}
+import { slugify } from "@/utils/slugify";
+import Container from "../common/Container";
 
 /**
  * PolicyLayout
@@ -63,7 +61,7 @@ export default function PolicyLayout({ title, updatedAt, sections }) {
 
   return (
     <section className="w-full bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <Container className="py-12">
         <header className="border-b pb-6">
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
             {title}
@@ -124,7 +122,7 @@ export default function PolicyLayout({ title, updatedAt, sections }) {
             ))}
           </article>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

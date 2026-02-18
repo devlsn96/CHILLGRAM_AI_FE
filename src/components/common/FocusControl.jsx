@@ -1,3 +1,6 @@
+import { normalizePoints, toPercent } from "@/utils/array";
+import { clamp, nearest } from "@/utils/number";
+
 /**
  * 필수:
  * - value: number
@@ -145,33 +148,4 @@ export default function FocusControl({
       ) : null}
     </div>
   );
-}
-
-function clamp(n, min, max) {
-  return Math.min(max, Math.max(min, n));
-}
-
-function normalizePoints(points) {
-  const arr = points
-    .map((n) => Number(n))
-    .filter((n) => Number.isFinite(n));
-
-  const uniq = Array.from(new Set(arr)).sort((a, b) => a - b);
-
-  if (uniq.length < 2) {
-    throw new Error("FocusControl: points는 유효한 숫자 2개 이상이어야 합니다.");
-  }
-  return uniq;
-}
-
-function nearest(points, value) {
-  return points.reduce((acc, cur) => {
-    if (Math.abs(cur - value) < Math.abs(acc - value)) return cur;
-    return acc;
-  }, points[0]);
-}
-
-function toPercent(v, min, max) {
-  if (max === min) return 0;
-  return ((v - min) / (max - min)) * 100;
 }

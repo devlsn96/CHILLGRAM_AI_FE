@@ -31,7 +31,7 @@ export default function CopySelectionSection({
             ].join(" ")}
           >
             <p className="font-bold">{c.title}</p>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-gray-600 whitespace-pre-line">
               {c.body}
             </p>
           </button>

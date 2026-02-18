@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Users,
   Package,
@@ -27,95 +26,14 @@ import {
 
 import Container from "@/components/common/Container";
 import Card from "@/components/common/Card";
-import { useAuthStore } from "@/stores/authStore";
 import { OPERATOR } from "@/data/users";
 import { PRODUCTS } from "@/data/products";
-
-// 1. 가상 데이터 정의
-const trendData = [
-  {
-    name: "10월",
-    두쫀쿠: 10,
-    발렌타인데이: 12,
-    건강한간식: 15,
-    프리미엄선물: 18,
-    SNS바이럴: 10,
-  },
-  {
-    name: "11월",
-    두쫀쿠: 15,
-    발렌타인데이: 14,
-    건강한간식: 25,
-    프리미엄선물: 22,
-    SNS바이럴: 18,
-  },
-  {
-    name: "12월",
-    두쫀쿠: 18,
-    발렌타인데이: 35,
-    건강한간식: 22,
-    프리미엄선물: 30,
-    SNS바이럴: 25,
-  },
-  {
-    name: "01월",
-    두쫀쿠: 25,
-    발렌타인데이: 42,
-    건강한간식: 28,
-    프리미엄선물: 35,
-    SNS바이럴: 22,
-  },
-  {
-    name: "02월",
-    두쫀쿠: 30,
-    발렌타인데이: 45,
-    건강한간식: 24,
-    프리미엄선물: 38,
-    SNS바이럴: 20,
-  },
-  {
-    name: "03월",
-    두쫀쿠: 22,
-    발렌타인데이: 15,
-    건강한간식: 30,
-    프리미엄선물: 32,
-    SNS바이럴: 40,
-  },
-];
-
-const activitySummary = [
-  { name: "광고 생성", count: 120, color: "#7F56D9" },
-  { name: "도안 생성", count: 85, color: "#2E90FA" },
-  { name: "SNS 게시", count: 210, color: "#12B76A" },
-];
-
-const LOGS = [
-  {
-    id: 1,
-    user: "김운영",
-    type: "광고 생성",
-    title: "발렌타인데이 캠페인 이미지 3건",
-    time: "2024-01-26 14:23:15",
-  },
-  {
-    id: 2,
-    user: "이매니저",
-    type: "SNS 게시",
-    title: "Instagram - 신제품 프로모션",
-    time: "2024-01-26 13:45:32",
-  },
-  {
-    id: 3,
-    user: "박관리",
-    type: "도안 생성",
-    title: "패키지 디자인 목업 5건",
-    time: "2024-01-26 12:18:47",
-  },
-];
+import { SNSProgress } from "@/components/sns/SNSProgress";
+import { ProjectItem } from "@/components/products/ProjectItem";
+import { TREND_DATA } from "@/data/trend";
+import { ACTIVITIES_LOGS, ACTIVITIES_SUM } from "@/data/activity";
 
 export default function AdminDashboardPage() {
-  const [selectedOperator, setSelectedOperator] = useState(null);
-
   return (
     <div className="min-h-full bg-[#F2F4F7] py-10 font-sans">
       <Container>
@@ -210,7 +128,7 @@ export default function AdminDashboardPage() {
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
-                  data={trendData}
+                  data={TREND_DATA}
                   margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
                 >
                   <CartesianGrid
@@ -314,7 +232,7 @@ export default function AdminDashboardPage() {
             </p>
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activitySummary}>
+                <BarChart data={ACTIVITIES_SUM}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
@@ -333,7 +251,7 @@ export default function AdminDashboardPage() {
                   />
                   <Tooltip cursor={{ fill: "#F9FAFB" }} />
                   <Bar dataKey="count" radius={[8, 8, 0, 0]} barSize={60}>
-                    {activitySummary.map((entry, index) => (
+                    {ACTIVITIES_SUM.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Bar>
@@ -349,7 +267,7 @@ export default function AdminDashboardPage() {
             </div>
             <p className="text-xs text-[#667085] mb-6">시스템 실시간 내역</p>
             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-              {LOGS.map((log) => (
+              {ACTIVITIES_LOGS.map((log) => (
                 <div
                   key={log.id}
                   className="p-4 bg-[#F9FAFB] rounded-2xl border border-[#F2F4F7] flex gap-3"
@@ -432,50 +350,6 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
       </Container>
-    </div>
-  );
-}
-
-// 서브 컴포넌트
-function ProjectItem({ tag, title, user, time, tagColor }) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3 overflow-hidden">
-        <span
-          className={`text-[10px] px-2 py-0.5 rounded-md border font-bold flex-shrink-0 ${tagColor}`}
-        >
-          {tag}
-        </span>
-        <span className="text-sm font-semibold text-[#344054] truncate">
-          {title}
-        </span>
-      </div>
-      <div className="text-[11px] text-[#98A2B3] flex-shrink-0 ml-2">
-        {time}
-      </div>
-    </div>
-  );
-}
-
-function SNSProgress({ icon, label, current, total, color }) {
-  const percent = (current / total) * 100;
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="text-sm font-semibold text-[#344054]">{label}</span>
-        </div>
-        <span className="text-xs font-bold text-[#667085]">
-          {current}/{total}
-        </span>
-      </div>
-      <div className="w-full bg-[#F2F4F7] h-2 rounded-full overflow-hidden">
-        <div
-          className={`${color} h-full rounded-full transition-all duration-700`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
     </div>
   );
 }

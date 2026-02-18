@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 
 export function ConsentSection({ value, onChange }) {
   return (
-    <div className="">
+    <div>
       <label className="flex items-start gap-3">
         <input
           type="checkbox"
           checked={value}
           onChange={(e) => onChange(e.target.checked)}
-          className="mt-1 h-5 w-5 accent-[#66FF2A]"
+          className="mt-1 h-5 w-5 accent-primary"
         />
         <span className="text-base text-black">
           <span className="font-semibold">[필수]</span> 개인정보 수집·이용에

@@ -20,25 +20,10 @@ import {
 } from "lucide-react";
 
 import Container from "@/components/common/Container";
-import Card from "@/components/common/Card";
-import loadingGif from "@/assets/Loding.gif";
-import Button from "../../components/common/Button";
-
-const TYPE_CONFIG = {
-  design: { label: "도안", icon: LayoutGrid },
-  product: { label: "제품 이미지", icon: ImageIcon },
-  sns: { label: "SNS 이미지", icon: Share2 },
-  shorts: { label: "숏츠", icon: Video },
-  banner: { label: "배너", icon: Megaphone },
-};
-
-const TYPE_TITLES = {
-  design: "패키지 도안 AI",
-  product: "제품 이미지 AI",
-  sns: "SNS 이미지 AI",
-  shorts: "숏츠 AI",
-  banner: "배너 이미지 AI",
-};
+import Button from "@/components/common/Button";
+import { FilterChip } from "@/components/ad/FilterChip";
+import { StatCard } from "@/components/ad/StatCard";
+import { TYPE_CONFIG, TYPE_TITLES } from "@/data/ads";
 
 export default function ADResultPage() {
   const navigate = useNavigate();
@@ -105,27 +90,6 @@ export default function ADResultPage() {
 
   // 데이터 매핑 (백엔드 -> 프론트엔드 UI 형식)
   const mappedResults = useMemo(() => {
-    // 0. 방금 생성된 결과 (location.state)
-    const tempResults = [];
-    if (location.state?.selectedCopy && location.state?.selectedProductImage) {
-      const sc = location.state.selectedCopy;
-      const si = location.state.selectedProductImage;
-      // 기본적으로 'product' 타입으로 간주 (또는 bannerSize 있으면 banner 등 로직 추가 가능)
-      // 여기서는 심플하게 P-Shot 결과로 가정
-      tempResults.push({
-        id: "temp-new",
-        type: "product",
-        title: sc.concept || sc.title || "새 광고",
-        description: sc.finalCopy || sc.body || "방금 생성된 광고입니다.",
-        date: new Date().toISOString().split("T")[0],
-        status: "활성", // 이미 생성 완료된 것으로 간주
-        platform: "Instagram", // or derived from state
-        imageUrl: si.url,
-        isNew: true,
-        stats: { views: 0, likes: 0, shares: 0 },
-      });
-    }
-
     // 1. DB에서 가져온 실제 결과 매핑
     const dbResults = realResults.map((item) => {
       const assets = item.assets || [];
@@ -280,34 +244,21 @@ export default function ADResultPage() {
               {headerDesc}
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={() =>
-                navigate(
-                  `/dashboard/products/${productId}/addPackage?projectId=${projectId}`,
-                )
-              }
-              variant="secondary"
-              className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 border border-blue-100 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all active:scale-95 text-sm"
-            >
-              <LayoutGrid className="h-4 w-4" /> 도안 생성
-            </Button>
-            {/* 새 광고 생성 버튼 */}
-            <Button
-              onClick={() =>
-                navigate(
-                  isProjectDetailMode
-                    ? `/dashboard/products/${productId}/addAD`
-                    : "./../",
-                )
-              }
-              variant="primary"
-              className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
-            >
-              <PlusCircle className="h-4 w-4" />{" "}
-              {isProjectDetailMode ? "광고 생성" : "새 광고 생성"}
-            </Button>
-          </div>
+          {/* 새 광고 생성 버튼 */}
+          <Button
+            onClick={() =>
+              navigate(
+                isProjectDetailMode
+                  ? `/dashboard/products/${productId}/addAD`
+                  : "./../",
+              )
+            }
+            variant="primary"
+            className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
+          >
+            <PlusCircle className="h-4 w-4" />{" "}
+            {isProjectDetailMode ? "광고 생성" : "새 광고 생성"}
+          </Button>
         </div>
 
         {/* 광고 생성 완료 배너 (프로젝트 상세에서는 숨김) */}
@@ -608,41 +559,5 @@ export default function ADResultPage() {
         </div>
       </Container>
     </div>
-  );
-}
-
-function StatCard({ label, value, icon: Icon }) {
-  return (
-    <Card className="relative bg-white border-gray-200 shadow-md hover:shadow-lg hover:border-blue-300 transition-all duration-300 h-24 p-4 flex flex-col justify-end overflow-hidden group">
-      {Icon && (
-        <div className="absolute top-3 right-3 p-1.5 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-          <Icon size={16} className="text-blue-400" strokeWidth={2.5} />
-        </div>
-      )}
-      <div className="flex flex-col text-left">
-        <span className="text-[12px] font-bold text-gray-400 mb-0.5 leading-tight tracking-tight whitespace-nowrap">
-          {label}
-        </span>
-        <p className="text-2xl font-black text-[#111827] tabular-nums leading-none">
-          {value}
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-function FilterChip({ label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
-        active
-          ? "bg-white text-[#111827] shadow-md"
-          : "bg-gray-100 text-[#9CA3AF] hover:text-[#111827]"
-      }`}
-    >
-      {label}
-    </button>
   );
 }

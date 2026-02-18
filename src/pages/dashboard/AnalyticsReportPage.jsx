@@ -1,19 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Download,
-  FileText,
-  DollarSign,
-  BarChart3,
-  Eye,
-  Target,
-  TrendingUp,
-  MousePointer2,
-  Users,
-  X,
-  Sparkles,
-} from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -25,9 +13,6 @@ import {
   Legend,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 
 import Container from "@/components/common/Container";
@@ -36,7 +21,6 @@ import Button from "@/components/common/Button";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { fetchProducts } from "@/services/api/productApi";
 import { useAuthStore } from "@/stores/authStore";
-import { apiFetch } from "@/lib/apiFetch";
 import {
   analyzeProduct,
   registerProduct,
@@ -44,26 +28,7 @@ import {
   reanalyzeProduct,
 } from "@/services/api/crawlerApi";
 import PdfViewer from "@/components/common/PdfViewer";
-
-// --- 로컬 실행을 위한 완결된 더미 데이터 ---
-const lineData = [
-  { name: "월", 조회수: 1100, 클릭: 400, 전환: 50 },
-  { name: "화", 조회수: 1900, 클릭: 550, 전환: 60 },
-  { name: "수", 조회수: 1500, 클릭: 480, 전환: 55 },
-  { name: "목", 조회수: 2100, 클릭: 650, 전환: 80 },
-  { name: "금", 조회수: 2500, 클릭: 720, 전환: 95 },
-  { name: "토", 조회수: 2200, 클릭: 680, 전환: 85 },
-  { name: "일", 조회수: 1800, 클릭: 520, 전환: 65 },
-];
-
-const barData = [
-  { name: "1월", 매출: 4500, 광고비: 2100 },
-  { name: "2월", 매출: 5200, 광고비: 2400 },
-  { name: "3월", 매출: 6100, 광고비: 2800 },
-  { name: "4월", 매출: 5800, 광고비: 2500 },
-  { name: "5월", 매출: 6800, 광고비: 2900 },
-  { name: "6월", 매출: 7800, 광고비: 3200 },
-];
+import { BAR, LINE, STATS } from "@/data/analytics";
 
 export default function AnalyticsReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -169,37 +134,6 @@ export default function AnalyticsReportPage() {
     enabled: bootstrapped,
   });
   const products = productsData?.content || [];
-
-  const stats = [
-    {
-      title: "총 매출",
-      value: "₩7,500,000",
-      trend: "+12.5%",
-      icon: DollarSign,
-      color: "text-green-500",
-    },
-    {
-      title: "ROI",
-      value: "268%",
-      trend: "+8.3%",
-      icon: BarChart3,
-      color: "text-blue-500",
-    },
-    {
-      title: "총 조회수",
-      value: "13,200",
-      trend: "+18.2%",
-      icon: Eye,
-      color: "text-purple-500",
-    },
-    {
-      title: "전환율",
-      value: "4.8%",
-      trend: "-0.5%",
-      icon: Target,
-      color: "text-orange-500",
-    },
-  ];
 
   // PDF 미리보기 가져오기
   const fetchPdfPreview = async (productId) => {
@@ -406,7 +340,7 @@ export default function AnalyticsReportPage() {
 
         {/* 상단 통계 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
-          {stats.map((stat, i) => (
+          {STATS.map((stat, i) => (
             <Card
               key={i}
               className="flex flex-col justify-between border-gray-200 shadow-sm p-4 h-32"
@@ -462,7 +396,7 @@ export default function AnalyticsReportPage() {
               <ErrorBoundary>
                 <div className="h-[320px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={lineData}>
+                    <LineChart data={LINE}>
                       <CartesianGrid
                         strokeDasharray="3 3"
                         vertical={false}
@@ -539,7 +473,7 @@ export default function AnalyticsReportPage() {
               <ErrorBoundary>
                 <div className="h-[320px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={barData}>
+                    <BarChart data={BAR}>
                       <CartesianGrid
                         strokeDasharray="3 3"
                         vertical={false}

@@ -21,27 +21,27 @@ export const STEP_LABELS = [
 
 export const AD_GOAL_OPTIONS = [
   {
-    value: "ATTENTION",
+    value: 0,
     label: "인지/주목 유도 (시즌·이벤트 시작 알림)",
     description: "이벤트나 시즌을 알리며 사용자의 관심을 유도합니다.",
   },
   {
-    value: "EMPATHY",
+    value: 1,
     label: "공감/응원 메시지 (상황에 감정적으로 연결)",
     description: "특정 상황에 공감하며 감정적인 연결을 만듭니다.",
   },
   {
-    value: "REWARD",
+    value: 2,
     label: "보상/위로 메시지 (끝난 뒤 휴식·리프레시)",
     description: "노력 이후의 감정을 위로하고 휴식을 제안합니다.",
   },
   {
-    value: "ENGAGE",
+    value: 3,
     label: "참여 유도 (댓글·공유·이벤트 참여 유도)",
     description: "콘텐츠 참여나 이벤트 행동을 자연스럽게 유도합니다.",
   },
   {
-    value: "CONVERT",
+    value: 4,
     label: "행동 유도 (상품 확인·구매/방문 유도)",
     description: "상품 확인 또는 구매 행동을 유도합니다.",
   },
@@ -74,20 +74,25 @@ export const AD_COPY_OPTIONS = [
   },
 ];
 
-// CONTENT_TYPE_OPTIONS >> ad.js로 분리
 export const AD_CONTENT_TYPE_OPTIONS = [
-  // {\r
-  //   title: "제품 이미지 AI",\r
-  //   description: "제품 사진을 AI로 생성",\r
-  //   icon: Image,\r
-  // },
   {
+    value: "SNS",
     title: "SNS 이미지 AI",
     description: "소셜미디어용 이미지",
     icon: Smartphone,
   },
-  { title: "숏츠 AI", description: "짧은 영상 콘텐츠", icon: Clapperboard },
-  { title: "배너 이미지 AI", description: "광고 배너 이미지", icon: ImageUp },
+  {
+    value: "VIDEO", // 숏츠는 VIDEO로 처리
+    title: "숏츠 AI",
+    description: "짧은 영상 콘텐츠",
+    icon: Clapperboard,
+  },
+  {
+    value: "BANNER",
+    title: "배너 이미지 AI",
+    description: "광고 배너 이미지",
+    icon: ImageUp,
+  },
 ];
 
 export const BANNER_RATIOS = [

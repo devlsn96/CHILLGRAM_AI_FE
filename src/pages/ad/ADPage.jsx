@@ -435,9 +435,10 @@ export default function ADPage() {
       const selectedProduct = productImages.find(
         (x) => String(x.id) === String(selectedProductImageId),
       );
-      if (!selectedProduct?.meta) {
+      
+      if (!selectedProduct?.url) {
         console.error(
-          "선택된 제품 이미지 meta가 없습니다. preview 응답(meta 포함) 확인 필요",
+          "선택된 제품 기본 이미지 정보가 없습니다.",
         );
         return;
       }
@@ -447,6 +448,7 @@ export default function ADPage() {
         productName,
         projectTitle,
         adGoal,
+        adMessageTarget: adGoal,
         requestText,
         selectedKeywords,
         adFocus,
@@ -470,11 +472,10 @@ export default function ADPage() {
 
         selectedTypes,
 
-        // ✅ BASIC에서 고른 후보 정보
         selectedProductImage: {
           candidateId: selectedProduct.id,
+          url: selectedProduct.url, 
           meta: selectedProduct.meta,
-          // 필요하면 previewJobId도 같이 보내서 서버에서 tmp 경로 추적 가능
           previewJobId,
         },
       };
@@ -483,7 +484,7 @@ export default function ADPage() {
       form.append("payload", JSON.stringify(payload));
       form.append("file", attachedFile);
 
-      const created = await createMutation.mutateAsync(form);
+      const created = await createMutation.mutateAsync({ productId, formData: form });
       navigate("./result", { state: { ...payload, created } });
       return;
     }

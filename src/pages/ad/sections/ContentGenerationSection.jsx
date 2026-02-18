@@ -15,7 +15,7 @@ export default function ContentGenerationSection({
   onRegenerateImages,
   isLoadingImages,
 }) {
-  const isBannerSelected = selectedTypes.includes("배너 이미지 AI");
+  const isBannerSelected = selectedTypes.includes("BANNER");
 
   return (
     <Card className="p-8 rounded-2xl border border-gray-200 shadow-sm">
@@ -107,16 +107,16 @@ export default function ContentGenerationSection({
       <div className="grid grid-cols-3 gap-4">
         {contentTypes.map((type) => {
           const Icon = type.icon;
-          const selected = selectedTypes.includes(type.title);
+          const selected = selectedTypes.includes(type.value);
 
           return (
             <button
-              key={type.title}
+              key={type.value}
               onClick={() =>
                 setSelectedTypes((prev) =>
-                  prev.includes(type.title)
-                    ? prev.filter((t) => t !== type.title)
-                    : [...prev, type.title]
+                  prev.includes(type.value)
+                    ? prev.filter((t) => t !== type.value)
+                    : [...prev, type.value]
                 )
               }
               className={[

@@ -34,17 +34,11 @@ export function fetchAdCopies(payload) {
 /**
  * 최종 광고 생성
  */
-export async function createAdContents(formData) {
-  const res = await fetch(`/api/advertising/ads`, {
+export async function createAdContents({ productId, formData }) {
+  return httpForm(`/api/advertising/${productId}/ads`, {
     method: "POST",
-    body: formData,
+    formData: formData,
   });
-
-  if (!res.ok) {
-    const msg = await res.text().catch(() => "create failed");
-    throw new Error(msg);
-  }
-  return res.json();
 }
 
 export async function createBasicImageJob({ payload, file, baseFile }) {

@@ -63,7 +63,7 @@ function pickSelectedCopy(copyResponse, selectedCopyId) {
 // 간단 폴링 유틸(최대 timeoutMs)
 async function pollJobUntilDone(
   jobId,
-  { intervalMs = 1000, timeoutMs = 60000 } = {},
+  { intervalMs = 10000, timeoutMs = 180000 } = {}, // 10초 간격, 3분 타임아웃
 ) {
   const started = Date.now();
 
@@ -76,6 +76,7 @@ async function pollJobUntilDone(
     if (Date.now() - started > timeoutMs) {
       throw new Error("제품 이미지 생성 시간이 초과되었습니다.");
     }
+
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 }
@@ -459,8 +460,11 @@ export default function ADPage() {
         selectedGuide,
 
         selectedCopyId,
+
         selectedCopy: {
           id: selectedCopy.id,
+          title: selectedCopy.concept,          
+          body: selectedCopy.finalCopy || "",   
           productName: selectedCopy.productName || productName,
           selectedConcept: selectedCopy.concept,
           finalCopy: selectedCopy.finalCopy,
@@ -469,9 +473,7 @@ export default function ADPage() {
           snsPrompt: selectedCopy.snsPrompt,
           selectionReason: selectedCopy.selectionReason,
         },
-
         selectedTypes,
-
         selectedProductImage: {
           candidateId: selectedProduct.id,
           url: selectedProduct.url, 

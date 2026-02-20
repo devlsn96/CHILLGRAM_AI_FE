@@ -314,7 +314,7 @@ export default function DesignPage() {
                           {
                             id: "dev-temp-base",
                             projectTitle:
-                              "새우깡 도안 생성 프로젝트 (Dev)_2026. 2. 20.",
+                              "새우깡 도안 생성 프로젝트 (Dev)_2026. 2. 19.",
                             label: "제품 이미지",
                           },
                         ]

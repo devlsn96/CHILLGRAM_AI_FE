@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import SegmentedTabs from "@/components/navigation/SegmentedTabs";
+import SegmentedTabs from "./SegmentedTabs";
 
 export default function TopTabs({ tabs, fallbackValue }) {
   const location = useLocation();

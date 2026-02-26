@@ -7,15 +7,7 @@ import { Field } from "@/components/common/Field";
 import { SelectField } from "@/components/common/SelectField";
 import { createQuestion } from "@/services/api/qnaApi";
 import { useAuthStore } from "@/stores/authStore";
-
-const CATEGORY_OPTIONS = [
-  { value: "1", label: "이용 방법" },
-  { value: "2", label: "기술 지원" },
-  { value: "3", label: "결제/환불" },
-  { value: "4", label: "기능 제안" },
-  { value: "5", label: "버그 리포트" },
-  { value: "6", label: "기타" },
-];
+import { CATEGORY_MAP } from "@/data/qnaData";
 
 export default function QnaWritePage() {
   const navigate = useNavigate();
@@ -74,7 +66,7 @@ export default function QnaWritePage() {
                       placeholder="카테고리를 선택하세요."
                       value={category}
                       onChange={setCategory}
-                      options={CATEGORY_OPTIONS}
+                      options={CATEGORY_MAP}
                     />
 
                     <Field
@@ -97,7 +89,9 @@ export default function QnaWritePage() {
                         className="w-full resize-none rounded-lg border border-gray-200 bg-primary/5 px-6 py-4 text-sm text-gray-700 outline-none ring-0 focus:ring-2 focus:ring-primary"
                         placeholder="질문 내용을 자세히 입력해주세요."
                         value={content}
-                        onChange={(e) => setContent(e.target.value.slice(0, 2000))}
+                        onChange={(e) =>
+                          setContent(e.target.value.slice(0, 2000))
+                        }
                         maxLength={2000}
                       />
                       <div className="mt-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-500">

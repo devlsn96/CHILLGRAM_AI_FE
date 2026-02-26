@@ -1,9 +1,8 @@
 ﻿import { useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { fetchProjectContentsWithAssets } from "@/services/api/contentApi";
 import { fetchJob } from "@/services/api/ad";
-import { fetchProjectsByProduct } from "@/services/api/projectApi";
 import {
   BadgeCheck,
   Download,
@@ -18,34 +17,18 @@ import {
   LayoutGrid,
   AlertCircle,
   Loader2,
-  RefreshCw,
 } from "lucide-react";
 
 import Container from "@/components/common/Container";
-import Card from "@/components/common/Card";
-import loadingGif from "@/assets/Loding.gif";
-import Button from "../../components/common/Button";
-
-const TYPE_CONFIG = {
-  design: { label: "도안", icon: LayoutGrid },
-  sns: { label: "SNS 이미지", icon: Share2 },
-  shorts: { label: "숏츠", icon: Video },
-  banner: { label: "배너", icon: Megaphone },
-};
-
-const TYPE_TITLES = {
-  design: "패키지 도안 AI",
-  product: "제품 이미지 AI",
-  sns: "SNS 이미지 AI",
-  shorts: "숏츠 AI",
-  banner: "배너 이미지 AI",
-};
+import Button from "@/components/common/Button";
+import { FilterChip } from "@/components/ad/FilterChip";
+import { StatCard } from "@/components/ad/StatCard";
+import { TYPE_CONFIG, TYPE_TITLES } from "@/data/ads";
 
 export default function ADResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { projectId, productId } = useParams();
-  const queryClient = useQueryClient();
 
   const [page, setPage] = useState(0);
   const pageSize = 10;
@@ -103,95 +86,21 @@ export default function ADResultPage() {
     queryKey: ["projectContents", projectId],
     queryFn: () => fetchProjectContentsWithAssets(projectId),
     enabled: !!projectId,
-    refetchInterval: 120000, // ✅ Poll every 2 minutes (Requested by User)
   });
-
-  // 2. 프로젝트 정보 조회 (제목 표시용) - 404 해결을 위해 목록에서 조회
-  const { data: projectList } = useQuery({
-    queryKey: ["projects", productId],
-    queryFn: () => fetchProjectsByProduct(productId),
-    enabled: !!productId,
-  });
-
-  const projectTitleFromApi = useMemo(() => {
-    if (!projectList) return null;
-    const list = Array.isArray(projectList)
-      ? projectList
-      : projectList.content || [];
-    const found = list.find((p) => String(p.id) === String(projectId));
-    return found?.title || found?.name;
-  }, [projectList, projectId]);
 
   // 데이터 매핑 (백엔드 -> 프론트엔드 UI 형식)
   const mappedResults = useMemo(() => {
-    // 0. 방금 생성된 결과 (location.state)
-    const tempResults = [];
-    // Case A: 광고 생성 결과
-    if (location.state?.selectedCopy && location.state?.selectedProductImage) {
-      const sc = location.state.selectedCopy;
-      const si = location.state.selectedProductImage;
-      // 기본적으로 'sns' 타입으로 간주 (UI 호환성)
-      tempResults.push({
-        id: "temp-new-ad",
-        type: "sns",
-        title: sc.concept || sc.title || "새 광고",
-        description: sc.finalCopy || sc.body || "방금 생성된 광고입니다.",
-        date: new Date().toISOString().split("T")[0],
-        status: "활성",
-        platform: "Instagram",
-        imageUrl: si.url,
-        isNew: true,
-        stats: { views: 0, likes: 0, shares: 0 },
-      });
-    }
-
-    // Case B: 도안(Mockup) 생성 결과 (개발용 이미지 등 ARCHIVED 상태 대비)
-    if (location.state?.newMockup) {
-      tempResults.push({
-        id: "temp-new-mockup",
-        type: "design",
-        title: "방금 생성된 도안",
-        description: "패키지 도안 생성이 완료되었습니다.",
-        date: new Date().toISOString().split("T")[0],
-        status: "활성",
-        imageUrl: location.state.newMockup.url,
-        isNew: true,
-      });
-    }
-
     // 1. DB에서 가져온 실제 결과 매핑
     const dbResults = realResults.map((item) => {
-      if (!item) return null; // Safety check
       const assets = item.assets || [];
       const primaryAsset =
         assets.find((a) => a.assetType === "PRIMARY") || assets[0] || {};
 
-      let imageUrl =
-        primaryAsset.fileUrl || primaryAsset.file_url || primaryAsset.url ||
-        item.gcsImgUrl || item.mockupImgUrl || item.fileUrl || item.file_url || item.url; // Fallback to item-level properties
-
-      // ✅ Fix: Prepend Backend URL if relative path
-      if (imageUrl && !imageUrl.startsWith("http") && !imageUrl.startsWith("blob:")) {
-        imageUrl = `http://35.190.71.4${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
-      }
-
-      // ✅ Video URL Extraction
-      let videoUrl = item.gcsVideoUrl || item.videoUrl || item.video_url;
-      if (!videoUrl) {
-        const videoAsset = assets.find(a => a.assetType === 'VIDEO' || (a.contentType && a.contentType.includes('video')) || (a.fileUrl && a.fileUrl.endsWith('.mp4')));
-        if (videoAsset) {
-          videoUrl = videoAsset.fileUrl || videoAsset.file_url || videoAsset.url;
-        }
-      }
-      if (videoUrl && !videoUrl.startsWith("http") && !videoUrl.startsWith("blob:")) {
-        videoUrl = `http://35.190.71.4${videoUrl.startsWith("/") ? "" : "/"}${videoUrl}`;
-      }
-
-      // Removed crashing debug log (type is not defined here)
-
+      const imageUrl =
+        primaryAsset.fileUrl || primaryAsset.file_url || primaryAsset.url;
       const thumbUrl = primaryAsset.thumbUrl || primaryAsset.thumb_url;
 
-      let type = "sns"; // Default to sns instead of product
+      let type = "product";
       const contentType = (
         item.contentType ||
         item.content_type ||
@@ -203,20 +112,6 @@ export default function ADResultPage() {
       else if (contentType === "DESIGN") type = "design";
       else if (contentType === "SNS" || item.platform === "Instagram")
         type = "sns";
-
-      // Heuristic fallback based on title if type is default or ambiguous
-      if (item.title) {
-        if (item.title.includes("배너")) type = "banner";
-        else if (
-          item.title.includes("SNS") ||
-          item.title.includes("인스타그램")
-        )
-          type = "sns";
-        else if (item.title.includes("숏츠") || item.title.includes("영상"))
-          type = "shorts";
-        else if (item.title.includes("도안") || item.title.includes("패키지"))
-          type = "design";
-      }
 
       return {
         id: item.contentId || item.id,
@@ -233,11 +128,12 @@ export default function ADResultPage() {
         },
         imageUrl,
         thumbUrl,
-        videoUrl, // Pass videoUrl to mapped item
         isGenerating:
-          (!imageUrl && !videoUrl && (item.status === "GENERATING" || item.status === "DRAFT" || item.status === "PENDING" || !item.status)),
+          item.status === "GENERATING" ||
+          item.status === "DRAFT" ||
+          (!imageUrl && item.status !== "ACTIVE"),
       };
-    }).filter(Boolean); // Filter out null items
+    });
 
     // 2. 현재 폴링 중인 잡(Job) 결과 합치기 (도안 전용)
     const pollingResults = [];
@@ -262,9 +158,7 @@ export default function ADResultPage() {
           imageUrl: job.outputUri,
           isNew: true,
         });
-      }
-      // Running job is handled by DB results (deduplication)
-      /* else if (job.status === "REQUESTED" || job.status === "RUNNING") {
+      } else if (job.status === "REQUESTED" || job.status === "RUNNING") {
         pollingResults.push({
           id: `job-${job.jobId}`,
           type: "design",
@@ -274,7 +168,7 @@ export default function ADResultPage() {
           status: "생성중",
           isGenerating: true,
         });
-      } */ else if (job.status === "FAILED") {
+      } else if (job.status === "FAILED") {
         pollingResults.push({
           id: `job-${job.jobId}`,
           type: "design",
@@ -287,14 +181,14 @@ export default function ADResultPage() {
       }
     });
 
-    return [...tempResults, ...pollingResults, ...dbResults];
+    return [...pollingResults, ...dbResults];
   }, [realResults, jobQueries]);
 
   const filteredResultsBase = useMemo(() => {
     const base = selectedTypes.length
       ? mappedResults.filter((item) =>
-        selectedTypes.includes(TYPE_TITLES[item.type]),
-      )
+          selectedTypes.includes(TYPE_TITLES[item.type]),
+        )
       : mappedResults;
 
     if (activeFilter === "all") return base;
@@ -311,8 +205,8 @@ export default function ADResultPage() {
   const stats = useMemo(() => {
     const base = selectedTypes.length
       ? mappedResults.filter((item) =>
-        selectedTypes.includes(TYPE_TITLES[item.type]),
-      )
+          selectedTypes.includes(TYPE_TITLES[item.type]),
+        )
       : mappedResults;
 
     return Object.keys(TYPE_CONFIG).reduce(
@@ -344,40 +238,27 @@ export default function ADResultPage() {
         <div className="mb-10 flex flex-wrap items-start justify-between gap-6">
           <div>
             <h1 className="text-4xl font-black text-[#111827] mb-3 tracking-tight">
-              {projectTitleFromApi || headerTitle}
+              {headerTitle}
             </h1>
             <p className="mt-2 text-sm font-medium text-[#9CA3AF]">
               {headerDesc}
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={() =>
-                navigate(
-                  `/dashboard/products/${productId}/addPackage?projectId=${projectId}`,
-                )
-              }
-              variant="secondary"
-              className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 border border-blue-100 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all active:scale-95 text-sm"
-            >
-              <LayoutGrid className="h-4 w-4" /> 도안 생성
-            </Button>
-            {/* 새 광고 생성 버튼 */}
-            <Button
-              onClick={() =>
-                navigate(
-                  isProjectDetailMode
-                    ? `/dashboard/products/${productId}/addAD`
-                    : "./../",
-                )
-              }
-              variant="primary"
-              className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
-            >
-              <PlusCircle className="h-4 w-4" />{" "}
-              {isProjectDetailMode ? "광고 생성" : "새 광고 생성"}
-            </Button>
-          </div>
+          {/* 새 광고 생성 버튼 */}
+          <Button
+            onClick={() =>
+              navigate(
+                isProjectDetailMode
+                  ? `/dashboard/products/${productId}/addAD`
+                  : "./../",
+              )
+            }
+            variant="primary"
+            className="px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 text-sm"
+          >
+            <PlusCircle className="h-4 w-4" />{" "}
+            {isProjectDetailMode ? "광고 생성" : "새 광고 생성"}
+          </Button>
         </div>
 
         {/* 광고 생성 완료 배너 (프로젝트 상세에서는 숨김) */}
@@ -396,11 +277,15 @@ export default function ADResultPage() {
 
         <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           <StatCard label="전체" value={stats.total} icon={Sparkles} />
-          <StatCard label="도안" value={stats.design} icon={ImageIcon} />
-
-          <StatCard label="SNS 이미지" value={stats.sns} icon={ImageIcon} />
+          <StatCard label="도안" value={stats.design} icon={LayoutGrid} />
+          <StatCard
+            label="제품 이미지"
+            value={stats.product}
+            icon={ImageIcon}
+          />
+          <StatCard label="SNS 이미지" value={stats.sns} icon={Share2} />
           <StatCard label="숏츠" value={stats.shorts} icon={Video} />
-          <StatCard label="배너" value={stats.banner} icon={ImageIcon} />
+          <StatCard label="배너" value={stats.banner} icon={Megaphone} />
         </div>
 
         {/* 결과 섹션 (탭 + 그리드) */}
@@ -419,44 +304,10 @@ export default function ADResultPage() {
                 label={`${config.label} (${stats[key]})`}
               />
             ))}
-
-            {/* ✅ Manual Refresh Button */}
-            <button
-              onClick={() => {
-                queryClient.invalidateQueries({
-                  queryKey: ["projectContents", projectId],
-                });
-                queryClient.invalidateQueries({
-                  queryKey: ["project", projectId],
-                });
-              }}
-              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-colors"
-              title="새로고침"
-            >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
-              />
-              <span>새로고침</span>
-            </button>
           </div>
 
           {/* 데이터 매핑 (백엔드 -> 프론트엔드 UI 형식) */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
-            {/* ✅ "Initializing..." State: Created but list empty yet */}
-            {!isLoading &&
-              filteredResults.length === 0 &&
-              location.state?.created && (
-                <div className="col-span-full py-20 flex flex-col items-center justify-center text-center">
-                  <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900">
-                    프로젝트 생성 중...
-                  </h3>
-                  <p className="text-gray-500 mt-2">
-                    AI가 콘텐츠를 생성하고 있습니다. 잠시만 기다려 주세요.
-                  </p>
-                </div>
-              )}
-
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-stretch">
             {filteredResults.map((item) => {
               const Icon = TYPE_CONFIG[item.type].icon;
               const isSnsOrShorts =
@@ -470,10 +321,11 @@ export default function ADResultPage() {
                 >
                   {/* 이미지/영상 영역 */}
                   <div
-                    className={`aspect-4/3 w-full flex items-center justify-center relative overflow-hidden ${isVideo
-                      ? "bg-gray-800"
-                      : "bg-linear-to-br from-[#F9FAFB] to-[#E5E7EB]"
-                      }`}
+                    className={`aspect-4/3 w-full flex items-center justify-center relative overflow-hidden ${
+                      isVideo
+                        ? "bg-gray-800"
+                        : "bg-linear-to-br from-[#F9FAFB] to-[#E5E7EB]"
+                    }`}
                   >
                     {item.isGenerating ? (
                       <div className="flex flex-col items-center justify-center p-4 text-center">
@@ -488,25 +340,22 @@ export default function ADResultPage() {
                             잠시만 기다려 주세요.
                           </p>
                         )}
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
-                        <span className="text-xs text-gray-500 font-medium">
-                          {String(item.id).includes("job") ? "도안 생성 중..." : "AI 생성 중..."}
-                        </span>
+                        {isVideo && (
+                          <p className="text-[10px] text-gray-500">
+                            (최대 10분)
+                          </p>
+                        )}
                       </div>
                     ) : item.isFailed ? (
                       <div className="flex flex-col items-center justify-center p-4 text-center">
-                        <AlertCircle className="h-8 w-8 text-red-400 mb-2" />
-                        <span className="text-xs text-red-500 font-medium">생성 실패</span>
+                        <AlertCircle className="h-10 w-10 text-red-400" />
+                        <p className="mt-2 text-sm font-bold text-red-400">
+                          생성 실패
+                        </p>
+                        <p className="mt-1 text-[10px] text-gray-400 line-clamp-2">
+                          {item.description}
+                        </p>
                       </div>
-                    ) : item.videoUrl ? (
-                      // ✅ Video Player
-                      <video
-                        src={item.videoUrl}
-                        controls
-                        className="h-full w-full object-cover"
-                        poster={item.imageUrl}
-                        preload="metadata"
-                      />
                     ) : item.imageUrl ? (
                       <img
                         src={item.imageUrl}
@@ -518,11 +367,11 @@ export default function ADResultPage() {
                     ) : (
                       <FileImage className="h-10 w-10 text-gray-300" />
                     )}
-                    {/* ... NEW badge ... */}
+
                     {item.isNew && (
-                      <span className="absolute top-2 right-2 px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full animate-pulse shadow-sm z-10">
+                      <div className="absolute top-3 right-3 bg-blue-500 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg animate-bounce">
                         NEW
-                      </span>
+                      </div>
                     )}
                   </div>
 
@@ -536,10 +385,11 @@ export default function ADResultPage() {
                       </span>
                       {item.platform && (
                         <span
-                          className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${item.platform === "Instagram"
-                            ? "bg-linear-to-r from-pink-100 to-purple-100 text-pink-600"
-                            : "bg-red-100 text-red-600"
-                            }`}
+                          className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
+                            item.platform === "Instagram"
+                              ? "bg-linear-to-r from-pink-100 to-purple-100 text-pink-600"
+                              : "bg-red-100 text-red-600"
+                          }`}
                         >
                           {item.platform === "Instagram" ? "📷" : "▶️"}{" "}
                           {item.platform}
@@ -560,10 +410,10 @@ export default function ADResultPage() {
                       📅 {item.date}
                     </p>
 
-                    {/* 설명 (User requested removal) */}
-                    {/* <p className="mt-2 text-sm text-teal-600">
+                    {/* 설명 */}
+                    <p className="mt-2 text-sm text-teal-600">
                       {item.description}
-                    </p> */}
+                    </p>
 
                     {/* SNS/Shorts 통계 */}
                     {isSnsOrShorts && item.stats && (
@@ -653,8 +503,7 @@ export default function ADResultPage() {
                 </div>
               );
             })}
-
-            {/* 빈 슬롯 채우기 (항상 8개 카드 높이 유지) */}
+            {/* 빈 슬롯 채우기 (항상 10개 카드 높이 유지) */}
             {!isLoading &&
               !isError &&
               Array.from({
@@ -662,8 +511,16 @@ export default function ADResultPage() {
               }).map((_, i) => (
                 <div
                   key={`empty-${i}`}
-                  className="rounded-2xl border border-transparent h-[500px]"
-                />
+                  className="overflow-hidden rounded-2xl border border-dashed border-gray-200 bg-gray-50/30 h-[500px] flex items-center justify-center"
+                >
+                  <div className="text-center">
+                    <p className="text-gray-300 text-sm font-bold">
+                      {filteredResultsBase.length === 0 && i === 4
+                        ? "생성된 콘텐츠가 없습니다."
+                        : ""}
+                    </p>
+                  </div>
+                </div>
               ))}
           </div>
 
@@ -680,10 +537,11 @@ export default function ADResultPage() {
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
                   key={i}
-                  className={`h-10 w-10 rounded-xl text-sm font-bold transition-all shadow-sm ${i === page
-                    ? "bg-[#60A5FA] text-white shadow-blue-500/20"
-                    : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
-                    }`}
+                  className={`h-10 w-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                    i === page
+                      ? "bg-[#60A5FA] text-white shadow-blue-500/20"
+                      : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  }`}
                   onClick={() => setPage(i)}
                 >
                   {i + 1}
@@ -701,40 +559,5 @@ export default function ADResultPage() {
         </div>
       </Container>
     </div>
-  );
-}
-
-function StatCard({ label, value, icon: Icon }) {
-  return (
-    <Card className="relative bg-white border-gray-200 shadow-md hover:shadow-lg hover:border-blue-300 transition-all duration-300 h-24 p-4 flex flex-col justify-end overflow-hidden group">
-      {Icon && (
-        <div className="absolute top-1/2 -translate-y-1/2 right-4 p-2.5 bg-blue-50 rounded-2xl group-hover:bg-blue-100 transition-colors">
-          <Icon size={24} className="text-blue-500" strokeWidth={2} />
-        </div>
-      )}
-      <div className="flex flex-col text-left">
-        <span className="text-[12px] font-bold text-gray-400 mb-0.5 leading-tight tracking-tight whitespace-nowrap">
-          {label}
-        </span>
-        <p className="text-2xl font-black text-[#111827] tabular-nums leading-none">
-          {value}
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-function FilterChip({ label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${active
-        ? "bg-white text-[#111827] shadow-md"
-        : "bg-gray-100 text-[#9CA3AF] hover:text-[#111827]"
-        }`}
-    >
-      {label}
-    </button>
   );
 }

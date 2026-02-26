@@ -3,12 +3,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Field } from "@/components/common/Field";
 import { SelectField } from "@/components/common/SelectField";
-import { PrimaryButton } from "@/components/common/PrimaryButton";
 import { ConsentSection } from "./ConsentSection";
 import { isEmail, isPasswordOk, isPasswordMatch } from "@/utils/validators";
 import { useFormField } from "@/hooks/useFormField";
 import { fetchCompanies } from "@/services/api/companies";
 import { signup } from "@/services/api/auth";
+import Button from "../common/Button";
 
 export function SignupForm() {
   const navigate = useNavigate();
@@ -220,12 +220,12 @@ export function SignupForm() {
         )}
       </div>
 
-      <PrimaryButton
+      <Button
         type="submit"
         disabled={!canSubmit || signupMutation.isPending}
       >
         {signupMutation.isPending ? "처리 중..." : "회원가입"}
-      </PrimaryButton>
+      </Button>
     </form>
   );
 }

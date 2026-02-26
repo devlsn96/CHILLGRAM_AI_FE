@@ -1,46 +1,14 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Calendar, MessageCircle } from "lucide-react";
+import { User, Calendar } from "lucide-react";
 import Container from "@/components/common/Container";
 import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { useAuthStore } from "@/stores/authStore";
 import { useQnaStore } from "@/stores/qnaStore";
-
-const CATEGORY_MAP = {
-  1: "이용 방법",
-  2: "기술 지원",
-  3: "결제/환불",
-  4: "기능 제안",
-  5: "버그 리포트",
-  6: "기타",
-};
-
-const STATUS_MAP = {
-  WAITING: "답변 대기",
-  PENDING: "답변 대기",
-  ANSWERED: "답변 완료",
-  DONE: "답변 완료",
-  COMPLETED: "답변 완료",
-};
-
-const STATUS_TONE = {
-  "답변 완료": "bg-green-100 text-green-700",
-  "답변 대기": "bg-orange-100 text-orange-700",
-};
-
-const FILTERS = [
-  { key: "all", label: "전체" },
-  { key: "pending", label: "답변 대기" },
-  { key: "done", label: "답변 완료" },
-];
-
-const FILTER_LABEL_MAP = {
-  all: "전체",
-  pending: "답변 대기",
-  done: "답변 완료",
-};
+import { maskName } from "@/utils/masking";
+import { CATEGORY_MAP, FILTER_LABEL_MAP, FILTERS, STATUS_MAP, STATUS_TONE } from "@/data/qnaData";
 
 export default function QnAPage() {
   // Zustand Store
@@ -110,11 +78,11 @@ export default function QnAPage() {
     // 탭 필터 적용
     if (filterStatus === "pending") {
       results = results.filter(
-        (q) => (STATUS_MAP[q.status] || q.status) === "답변 대기"
+        (q) => (STATUS_MAP[q.status] || q.status) === "답변 대기",
       );
     } else if (filterStatus === "done") {
       results = results.filter(
-        (q) => (STATUS_MAP[q.status] || q.status) === "답변 완료"
+        (q) => (STATUS_MAP[q.status] || q.status) === "답변 완료",
       );
     }
 
@@ -122,7 +90,7 @@ export default function QnAPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       results = results.filter((item) =>
-        (item.title || "").toLowerCase().includes(q)
+        (item.title || "").toLowerCase().includes(q),
       );
     }
 
@@ -145,10 +113,7 @@ export default function QnAPage() {
 
       const rawName =
         q.createdByName || q.name || q.created_by || q.createdBy || "익명";
-      const authorLabel =
-        rawName.length > 1
-          ? rawName[0] + "*".repeat(rawName.length - 1)
-          : rawName;
+      const authorLabel = rawName.length > 1 ? maskName(rawName) : rawName;
 
       const statusLabel = STATUS_MAP[q.status] || q.status || "답변 대기";
 
@@ -270,7 +235,10 @@ export default function QnAPage() {
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               <ErrorBoundary>
                 {statCards.map((stat) => (
-                  <Card key={stat.label} className="border-gray-100 border-2 shadow-sm">
+                  <Card
+                    key={stat.label}
+                    className="border-gray-100 border shadow-sm"
+                  >
                     <div className="flex items-center justify-between">
                       <div className="text-lg font-medium text-gray-500">
                         {stat.label}
@@ -339,10 +307,11 @@ export default function QnAPage() {
                           setFilterStatus(filter.key);
                           setPage(0);
                         }}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${isActive
-                          ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
-                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                          }`}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          isActive
+                            ? "bg-white text-gray-900 shadow-sm ring-1 ring-black/5"
+                            : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                        }`}
                       >
                         {filter.label} ({countLabel})
                       </button>
@@ -372,7 +341,7 @@ export default function QnAPage() {
                       to={`/qna/${question.questionId || question.id}`}
                       className="block group"
                     >
-                      <div className="rounded-2xl border-2 border-gray-300 bg-white p-5 shadow-sm transition-all hover:border-primary hover:shadow-md">
+                      <div className="rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all hover:border-primary/50 hover:shadow-md">
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           <span className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-gray-600 font-medium">
                             {question.categoryLabel}
@@ -383,13 +352,13 @@ export default function QnAPage() {
                             {question.statusLabel}
                           </span>
                         </div>
-                        <h3 className="mt-1 text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">
+                        <h3 className="mt-4 text-xl font-bold text-gray-900 group-hover:text-primary transition-colors">
                           {question.title}
                         </h3>
                         <p className="mt-2 line-clamp-2 text-sm text-gray-500">
                           {question.excerpt}
                         </p>
-                        <div className="mt-3 flex flex-wrap items-center justify-end gap-3 text-sm text-gray-400">
+                        <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-gray-400">
                           <span className="flex items-center gap-1.5">
                             <User size={16} className="text-gray-300" />
                             {question.authorLabel}

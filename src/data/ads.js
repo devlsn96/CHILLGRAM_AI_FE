@@ -2,10 +2,31 @@
 import {
   Clapperboard,
   Image,
+  ImageIcon,
   ImageUp,
+  LayoutGrid,
+  Megaphone,
   Package,
+  Share2,
   Smartphone,
+  Video,
 } from "lucide-react";
+
+export const TYPE_CONFIG = {
+  design: { label: "도안", icon: LayoutGrid },
+  product: { label: "제품 이미지", icon: ImageIcon },
+  sns: { label: "SNS 이미지", icon: Share2 },
+  shorts: { label: "숏츠", icon: Video },
+  banner: { label: "배너", icon: Megaphone },
+};
+
+export const TYPE_TITLES = {
+  design: "패키지 도안 AI",
+  product: "제품 이미지 AI",
+  sns: "SNS 이미지 AI",
+  shorts: "숏츠 AI",
+  banner: "배너 이미지 AI",
+};
 
 // PRODUCT_OPTIONS는 PRODUCTS로 대체
 // - label >> name으로 대체
@@ -47,11 +68,11 @@ export const AD_GOAL_OPTIONS = [
   },
 ];
 
-
 export const CONTENT_TIP =
   "여러 타입을 선택하여 다양한 채널에 맞는 광고를 한 번에 생성할 수 있습니다.";
 
-export const TREND_SUMMARY = "현재 시즌에 맞는 이벤트를 분석해 광고에 활용할 키워드를 추천합니다.";
+export const TREND_SUMMARY =
+  "현재 시즌에 맞는 이벤트를 분석해 광고에 활용할 키워드를 추천합니다.";
 
 // trend관련 데이터(TREND_KEYWORDS TREND_HASHTAGS TREND_STYLE_SUMMARY TREND_AI_GUIDE_OPTIONS)는 trend 데이터로 분리
 
@@ -96,14 +117,45 @@ export const AD_CONTENT_TYPE_OPTIONS = [
 ];
 
 export const BANNER_RATIOS = [
-  {idx: 1, value:"1:1"},
-  {idx: 2, value:"2:3"},
-  {idx: 3, value:"3:2"},
-  {idx: 4, value:"3:4"},
-  {idx: 5, value:"4:3"},
-  {idx: 6, value:"4:5"},
-  {idx: 7, value:"5:4"},
-  {idx: 8, value:"9:16"},
-  {idx: 9, value:"16:9"},
-  {idx: 10, value:"21:9"},
+  { idx: 1, value: "1:1" },
+  { idx: 2, value: "2:3" },
+  { idx: 3, value: "3:2" },
+  { idx: 4, value: "3:4" },
+  { idx: 5, value: "4:3" },
+  { idx: 6, value: "4:5" },
+  { idx: 7, value: "5:4" },
+  { idx: 8, value: "9:16" },
+  { idx: 9, value: "16:9" },
+  { idx: 10, value: "21:9" },
 ];
+
+export const AD_COPY = {
+  recommendedCopyId: "c3",
+  copies: [
+    {
+      id: "c1",
+      title: "행복한 순간",
+      body: "작은 행복이 모여 큰 추억이 됩니다.\n당신의 특별한 순간을 더 달콤하게.",
+    },
+    {
+      id: "c2",
+      title: "따뜻한 마음",
+      body: "마음을 담아 정성스럽게 만든 달콤함.\n소중한 사람과 함께 나누세요.",
+    },
+    {
+      id: "c3",
+      title: "일상의 여유",
+      body: "바쁜 하루 속 작은 쉼표.\n달콤한 여유로 일상을 채워보세요.",
+    },
+    {
+      id: "c4",
+      title: "오늘의 리셋",
+      body: "지친 하루를 가볍게 리셋.\n한 입으로 기분까지 환해집니다.",
+    },
+    {
+      id: "c5",
+      title: "선물 같은 한입",
+      body: "특별한 날이 아니어도 좋아요.\n오늘을 선물처럼 만드는 한 입.",
+    },
+  ],
+};

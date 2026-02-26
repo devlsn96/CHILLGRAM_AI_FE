@@ -1,3 +1,5 @@
+import ErrorMessage from "./ErrorMessage";
+
 export function Field({
   label,
   required,
@@ -13,7 +15,7 @@ export function Field({
   return (
     <label className="block">
       <div className="mb-3 text-sm font-semibold text-black">
-        {label} {required ? <span className="text-red-500">*</span> : null}
+        {label} {required ? <span className="text-black">*</span> : null}
       </div>
 
       <input
@@ -33,7 +35,7 @@ export function Field({
       />
 
       {showError ? (
-        <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
+        <ErrorMessage className="mt-2 font-medium">{error}</ErrorMessage>
       ) : null}
     </label>
   );

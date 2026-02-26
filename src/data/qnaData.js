@@ -1,3 +1,42 @@
+export const STATUS_MAP = {
+  WAITING: "답변 대기",
+  PENDING: "답변 대기",
+  ANSWERED: "답변 완료",
+  DONE: "답변 완료",
+  COMPLETED: "답변 완료",
+};
+
+export const STATUS_TONE = {
+  "답변 완료": "bg-green-100 text-green-700",
+  "답변 대기": "bg-orange-100 text-orange-700",
+};
+
+export const ROLE_TONE = {
+  관리자: "bg-blue-600 text-white",
+  담당자: "bg-indigo-600 text-white",
+};
+
+export const CATEGORY_MAP = {
+  1: "이용 방법",
+  2: "기술 지원",
+  3: "결제/환불",
+  4: "기능 제안",
+  5: "버그 리포트",
+  6: "기타",
+};
+
+export const FILTERS = [
+  { key: "all", label: "전체" },
+  { key: "pending", label: "답변 대기" },
+  { key: "done", label: "답변 완료" },
+];
+
+export const FILTER_LABEL_MAP = {
+  all: "전체",
+  pending: "답변 대기",
+  done: "답변 완료",
+};
+
 export const QUESTIONS = [
   {
     id: 1,

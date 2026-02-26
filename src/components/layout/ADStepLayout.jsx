@@ -1,7 +1,7 @@
-﻿import Container from "@/components/common/Container";
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Button from "../common/Button";
+import Container from "../common/Container";
 
 export default function ADStepLayout({
   step,
@@ -30,7 +30,6 @@ export default function ADStepLayout({
 
       <div className="flex justify-between mt-8">
         <Button
-          type="button"
           variant="secondary"
           onClick={onPrev}
           disabled={step === 1}
@@ -41,14 +40,13 @@ export default function ADStepLayout({
         </Button>
 
         <Button
-          type="button"
           onClick={onNext}
           disabled={disableNext}
           variant="primary"
           className={`flex items-center gap-1.5 rounded-lg text-sm px-4 py-2 font-bold shadow-sm ${
             disableNext
               ? "bg-gray-300 text-gray-500"
-              : "bg-[#60A5FA] hover:brightness-95"
+              : "bg-primary hover:brightness-95"
           }`}
         >
           {nextLabel ?? "다음"}

@@ -11,26 +11,25 @@ import SignupPage from "@/pages/SignupPage";
 import SignupEmailSentPage from "@/pages/SignupEmailSentPage";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import PrivacyConsentPage from "@/pages/PrivacyConsentPage";
-
-import HomePage from "@/pages/HomePage";
+import HomePage from "@/pages/home/HomePage";
 import QnAPage from "@/pages/qna/QnAPage";
 import QnaWritePage from "@/pages/qna/QnaWritePage";
 import QnaDetailPage from "@/pages/qna/QnaDetailPage";
 import QnaEditPage from "@/pages/qna/QnaEditPage";
 
-import DashboardPage from "@/pages/DashboardPage";
-import AdminDashboardPage from "@/pages/AdminDashboardPage";
-import ProductPackagePage from "@/pages/ProductPackagePage";
-import ADPage from "@/pages/ad/ADPage";
-import SnsManagementPage from "@/pages/SnsManagement.jsx";
-import ProductManagementPage from "@/pages/ProductManagement";
-import ProductAdStatusPage from "@/pages/ProductAdStatus";
-import AnalyticsReportPage from "@/pages/AnalyticsReportPage";
+import DashboardPage from "@/pages/dashboard/DashboardPage";
+import AdminDashboardPage from "@/pages/dashboard/AdminDashboardPage";
+import ProductPackagePage from "@/pages/dashboard/products/ProductPackagePage";
+import ADPage from "@/pages/dashboard/products/ad/ADPage";
+import SnsManagementPage from "@/pages/dashboard/SnsManagement";
+import ProductManagementPage from "@/pages/dashboard/products/ProductManagement";
+import ProductAdStatusPage from "@/pages/dashboard/products/ProductAdStatus";
+import AnalyticsReportPage from "@/pages/dashboard/AnalyticsReportPage";
 // ProjectAdDetail & ProjectDesignDetail now consolidated into ADResultPage
-import ADResultPage from "@/pages/ad/ADResultPage";
+import ADResultPage from "@/pages/dashboard/products/ad/ADResultPage";
+import YoutubeCallbackPage from "@/pages/oauth/YoutubeCallbackPage";
 
 import { parseJwt } from "@/utils/jwt";
-import YoutubeCallbackPage from "../pages/oauth/YoutubeCallbackPage";
 
 export default function App() {
   const login = useAuthStore((s) => s.login);
@@ -58,6 +57,7 @@ export default function App() {
       <ErrorBoundary>
         <ScrollToTop />
         <Routes>
+          {/* Public */}
           <Route path="/" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/sent" element={<SignupEmailSentPage />} />
@@ -66,46 +66,53 @@ export default function App() {
           <Route path="/qna" element={<QnAPage />} />
           <Route path="/qna/:questionId" element={<QnaDetailPage />} />
 
-          {/* 로그인 라우트 */}
+          {/* Private : 로그인 라우트 */}
           <Route element={<PrivateRoute />}>
+            {/* QNA */}
             <Route path="/qna/new" element={<QnaWritePage />} />
             <Route path="/qna/:questionId/edit" element={<QnaEditPage />} />
+
+            {/* ADMIN */}
             <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/dashboard/sns" element={<SnsManagementPage />} />
+
+            {/* DASHBOARD */}
+            <Route path="/dashboard">
+              <Route index element={<DashboardPage />} />
+
+              {/* PRODUCTS */}
+              <Route path="products">
+                <Route index element={<ProductManagementPage />} />
+                <Route path=":productId">
+                  <Route index element={<ProductAdStatusPage />} />
+                  {/* CREATE */}
+                  <Route path="addPackage" element={<ProductPackagePage />} />
+                  <Route path="addAD">
+                    <Route index element={<ADPage />} />
+                    <Route path="result" element={<ADResultPage />} />
+                  </Route>
+                </Route>
+
+                <Route
+                  path="projectAdDetail/:projectId"
+                  element={<ADResultPage />}
+                />
+
+                <Route
+                  path="projectDesignDetail/:projectId"
+                  element={<ADResultPage />}
+                />
+              </Route>
+
+              {/* SNS MANAGEMENT */}
+              <Route path="sns" element={<SnsManagementPage />} />
+              {/* ANALYTICS REPORTS */}
+              <Route path="analytics" element={<AnalyticsReportPage />} />
+            </Route>
+
             <Route
-              path="/dashboard/products"
-              element={<ProductManagementPage />}
+              path="/login/oauth/youtube"
+              element={<YoutubeCallbackPage />}
             />
-            <Route
-              path="/dashboard/products/:productId"
-              element={<ProductAdStatusPage />}
-            />
-            <Route
-              path="/dashboard/products/:productId/projectAdDetail/:projectId"
-              element={<ADResultPage />}
-            />
-            <Route
-              path="/dashboard/products/:productId/projectDesignDetail/:projectId"
-              element={<ADResultPage />}
-            />
-            <Route
-              path="/dashboard/products/:productId/addPackage"
-              element={<ProductPackagePage />}
-            />
-            <Route
-              path="/dashboard/products/:productId/addAD"
-              element={<ADPage />}
-            />
-            <Route
-              path="/dashboard/products/:productId/addAD/result"
-              element={<ADResultPage />}
-            />
-            <Route
-              path="/dashboard/analytics"
-              element={<AnalyticsReportPage />}
-            />
-            <Route path="/login/oauth/youtube" element={<YoutubeCallbackPage />} />
           </Route>
         </Routes>
       </ErrorBoundary>

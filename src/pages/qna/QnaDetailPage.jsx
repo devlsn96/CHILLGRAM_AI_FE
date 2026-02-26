@@ -8,34 +8,8 @@ import { MessageSquare, User, Calendar } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQnaStore } from "@/stores/qnaStore";
 import { apiFetch } from "@/lib/apiFetch";
-import { maskName } from "../../utils/masking";
-
-const STATUS_MAP = {
-  WAITING: "답변 대기",
-  PENDING: "답변 대기",
-  ANSWERED: "답변 완료",
-  DONE: "답변 완료",
-  COMPLETED: "답변 완료",
-};
-
-const STATUS_TONE = {
-  "답변 완료": "bg-green-100 text-green-700",
-  "답변 대기": "bg-orange-100 text-orange-700",
-};
-
-const ROLE_TONE = {
-  관리자: "bg-blue-600 text-white",
-  담당자: "bg-indigo-600 text-white",
-};
-
-const CATEGORY_MAP = {
-  1: "이용 방법",
-  2: "기술 지원",
-  3: "결제/환불",
-  4: "기능 제안",
-  5: "버그 리포트",
-  6: "기타",
-};
+import { maskName } from "@/utils/masking";
+import { CATEGORY_MAP, ROLE_TONE, STATUS_MAP, STATUS_TONE } from "@/data/qnaData";
 
 // 인증 토큰이 필요한 이미지를 불러오는 컴포넌트
 const AuthImage = ({ src, alt, className }) => {
@@ -300,10 +274,11 @@ export default function QnaDetailPage() {
                       })()}
                     </span>
                     <span
-                      className={`rounded-lg px-3 py-1 font-bold ${STATUS_TONE[
-                        STATUS_MAP[question.status] || question.status
+                      className={`rounded-lg px-3 py-1 font-bold ${
+                        STATUS_TONE[
+                          STATUS_MAP[question.status] || question.status
                         ] || "bg-gray-100 text-gray-700"
-                        }`}
+                      }`}
                     >
                       {STATUS_MAP[question.status] ||
                         question.status ||
@@ -334,18 +309,18 @@ export default function QnaDetailPage() {
                   {(question.imageUrl ||
                     question.fileUrl ||
                     question.gcsImageUrl) && (
-                      <div className="mt-8">
-                        <AuthImage
-                          src={
-                            question.imageUrl ||
-                            question.fileUrl ||
-                            question.gcsImageUrl
-                          }
-                          alt="첨부 이미지"
-                          className="max-h-96 max-w-full rounded-2xl border border-gray-200 object-contain shadow-sm"
-                        />
-                      </div>
-                    )}
+                    <div className="mt-8">
+                      <AuthImage
+                        src={
+                          question.imageUrl ||
+                          question.fileUrl ||
+                          question.gcsImageUrl
+                        }
+                        alt="첨부 이미지"
+                        className="max-h-96 max-w-full rounded-2xl border border-gray-200 object-contain shadow-sm"
+                      />
+                    </div>
+                  )}
 
                   {question.attachments && question.attachments.length > 0 && (
                     <div className="mt-8 space-y-6">
@@ -401,15 +376,16 @@ export default function QnaDetailPage() {
                               <span className="text-base font-bold text-gray-900">
                                 {maskName(
                                   answer.answeredByName ||
-                                  answer.author ||
-                                  answer.name,
+                                    answer.author ||
+                                    answer.name,
                                 )}
                               </span>
                               {answer.role && (
                                 <span
-                                  className={`rounded-md px-2 py-0.5 text-xs font-bold ${ROLE_TONE[answer.role] ||
+                                  className={`rounded-md px-2 py-0.5 text-xs font-bold ${
+                                    ROLE_TONE[answer.role] ||
                                     "bg-gray-400 text-white"
-                                    }`}
+                                  }`}
                                 >
                                   {answer.role}
                                 </span>

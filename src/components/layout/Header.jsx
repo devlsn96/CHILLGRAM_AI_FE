@@ -1,13 +1,12 @@
-﻿import { useState, useEffect } from "react";
-import Logo from "@/assets/image/logo.png";
-import { Brand } from "@/components/common/Brand";
-import { NavMenu } from "@/components/common/NavMenu";
-import { CtaButton } from "@/components/common/CtaButton";
-import AuthModal from "@/components/auth/AuthModal";
-import Button from "@/components/common/Button";
-
-import { useAuthStore } from "@/stores/authStore";
+﻿import { useAuthStore } from "@/stores/authStore";
 import { logoutApi } from "@/data/authApi";
+import Logo from "@/assets/image/logo.png";
+import { useState, useEffect } from "react";
+import AuthModal from "../auth/AuthModal";
+import Container from "../common/Container";
+import { Brand } from "../common/Brand";
+import { NavMenu } from "../common/NavMenu";
+import Button from "../common/Button";
 
 export function Header() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -66,8 +65,8 @@ export function Header() {
 
   return (
     <>
-      <header className="w-full bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+      <header className="bg-white">
+        <Container className="flex h-16 items-center justify-between">
           <Brand logoSrc={brand.logoSrc} name={brand.name} href={brand.href} />
 
           <div className="flex items-center gap-8">
@@ -78,10 +77,10 @@ export function Header() {
                 로그아웃
               </Button>
             ) : (
-              <CtaButton label="로그인" onClick={() => setIsAuthOpen(true)} />
+              <Button variant="cta" size="lg" label="로그인" onClick={() => setIsAuthOpen(true)} />
             )}
           </div>
-        </div>
+        </Container>
         <div className="h-px w-full bg-gray-200" />
       </header>
 
